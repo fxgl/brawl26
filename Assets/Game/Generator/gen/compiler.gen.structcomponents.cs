@@ -20,6 +20,7 @@ namespace ME.ECS {
             WorldUtilities.InitComponentTypeId<Game.Components.DamageableTag>(true, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.PlayerTag>(true, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.ProjectileTag>(true, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Features.Players.NewComponent>(true, true, true, false, false, false, false, false, false, false);
 
         }
 
@@ -41,6 +42,7 @@ namespace ME.ECS {
             WorldUtilities.InitComponentTypeId<Game.Components.DamageableTag>(true, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.PlayerTag>(true, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.ProjectileTag>(true, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Features.Players.NewComponent>(true, true, true, false, false, false, false, false, false, false);
 
             ComponentsInitializerWorld.Setup(ComponentsInitializerWorldGen.Init);
             CoreComponentsInitializer.Init(state, ref noState);
@@ -57,6 +59,7 @@ namespace ME.ECS {
             state.structComponents.ValidateUnmanaged<Game.Components.DamageableTag>(ref state.allocator, true);
             state.structComponents.ValidateUnmanaged<Game.Components.PlayerTag>(ref state.allocator, true);
             state.structComponents.ValidateUnmanaged<Game.Components.ProjectileTag>(ref state.allocator, true);
+            state.structComponents.ValidateUnmanaged<Game.Features.Players.NewComponent>(ref state.allocator, true);
 
         }
 
@@ -78,6 +81,7 @@ namespace ME.ECS {
             entity.ValidateDataUnmanaged<Game.Components.DamageableTag>(true);
             entity.ValidateDataUnmanaged<Game.Components.PlayerTag>(true);
             entity.ValidateDataUnmanaged<Game.Components.ProjectileTag>(true);
+            entity.ValidateDataUnmanaged<Game.Features.Players.NewComponent>(true);
 
         }
 

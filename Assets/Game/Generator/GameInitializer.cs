@@ -30,6 +30,7 @@ namespace Game.Generator {
         public PlayersFeature playersFeature;
         public CombatFeature combatFeature;
 
+  
         public void OnDrawGizmos() {
             if (this.world != null) {
                 this.world.OnDrawGizmos();
@@ -50,6 +51,7 @@ namespace Game.Generator {
                     
                     // Create new state
                     this.world.SetState<TState>(WorldUtilities.CreateState<TState>());
+                    this.world.SetState<GameState>(WorldUtilities.CreateState<GameState>());
                     
                     // Set world seed
                     this.world.SetSeed(1u);
@@ -60,14 +62,16 @@ namespace Game.Generator {
                     // Initialize world
                     this.Initialize(this.world);
                     
-                    // Add BrawlGame features
-                    if (this.playersFeature != null) {
-                        this.world.AddFeature(this.playersFeature);
-                    }
+                    // // Add BrawlGame features
+                     if (this.playersFeature != null) {
+                         this.world.AddFeature(this.playersFeature );
+                     }
                     
-                    if (this.combatFeature != null) {
-                        this.world.AddFeature(this.combatFeature);
-                    }
+                   // this.world.AddFeature(new PlayersFeature() );
+                    
+                   // if (this.combatFeature != null) {
+                        this.world.AddFeature(new CombatFeature());
+                   // }
                 }
             }
 
@@ -75,13 +79,13 @@ namespace Game.Generator {
                 this.world.SetWorldThread(System.Threading.Thread.CurrentThread);
                 this.world.Load(() => {
                     // Save initialization state
-                   // this.world.SaveResetState<TState>();
+                    this.world.SaveResetState<TState>();
                 });
             }
 
             if (this.world != null && this.world.IsLoaded() == true) {
                 var dt = Time.deltaTime;
-               // this.world.PreUpdate(dt);
+                this.world.PreUpdate(dt);
                 this.world.Update(dt);
             }
         }

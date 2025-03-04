@@ -12,7 +12,7 @@ namespace Game {
         public int maxPlayers;
         public bool gameInProgress;
         
-        public void OnCreate() {
+        public GameState() {
             this.players = new Dictionary<int, Entity>();
             this.roundTime = 0f;
             this.maxPlayers = 4;
@@ -24,7 +24,7 @@ namespace Game {
             
             var otherState = (GameState)other;
             
-            if(otherState == null) return;
+            if(otherState.players == null) return;
             
             // Copy collections
             this.players = new Dictionary<int, Entity>();

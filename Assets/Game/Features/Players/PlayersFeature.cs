@@ -1,3 +1,4 @@
+using Game.Views;
 using ME.ECS;
 using ME.ECS.Views.Providers;
 using UnityEngine;
@@ -17,7 +18,11 @@ namespace Game.Features {
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.ArrayBoundsChecks, false),
      Unity.IL2CPP.CompilerServices.Il2CppSetOptionAttribute(Unity.IL2CPP.CompilerServices.Option.DivideByZeroChecks, false)]
     #endif
+    //[CreateAssetMenu(fileName = "PlayersFeature", menuName = "ME.ECS/Features/Players Feature", order = 0)]
     public sealed class PlayersFeature : Feature {
+        
+        public PlayerView playerView;
+        private ViewId playerViewId;
         
         [Header("Player Settings")]
         public float moveSpeed = 5f;
@@ -29,6 +34,8 @@ namespace Game.Features {
         public GameObject playerPrefab;
 
         protected override void OnConstruct() {
+            this.playerViewId = this.world.RegisterViewSource(this.playerView);
+
             // Add player systems
             this.AddSystem<PlayerSpawnSystem>();
             this.AddSystem<PlayerInputSystem>();
@@ -52,6 +59,7 @@ namespace Game.Features {
             
             // Add player components
             entity.Set(new PlayerTag());
+            entity.InstantiateView(this.playerViewId);
             entity.Set(new PlayerIdComponent { id = playerId });
             entity.Set(new HealthComponent { current = this.maxHealth, max = this.maxHealth });
             

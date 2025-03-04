@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "com.me.ecs": "https://github.com/chromealex/ecs-submodule.git",
+    "com.me.ecs.addons.sceneviewinitializer": "https://github.com/chromealex/me.ecs-sceneviewinitializer.git",
     "com.me.ecs.essentials.dataconfigs": "https://github.com/chromealex/me.ecs-dataconfigs.git",
     "com.me.ecs.markers": "https://github.com/chromealex/me.ecs-markers.git",
     "com.unity.addressables": "1.19.9",
