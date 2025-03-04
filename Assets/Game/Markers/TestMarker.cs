@@ -2,7 +2,7 @@
 
 namespace Game.Markers {
     
-    public struct TestMarker : IMarker {
+    public struct TestMarker  {
         
         
         

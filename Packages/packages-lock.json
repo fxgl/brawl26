@@ -30,6 +30,21 @@
       },
       "hash": "2526acc6f6330d816e68b5b680931a63d3c6258b"
     },
+    "com.me.ecs.markers": {
+      "version": "https://github.com/chromealex/me.ecs-markers.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.collections": "1.0.0-pre.6",
+        "com.unity.ui": "1.0.0-preview.18",
+        "com.unity.addressables": "1.19.9",
+        "com.unity.burst": "1.5.6",
+        "com.unity.mathematics": "1.2.1",
+        "com.unity.localization": "1.0.5",
+        "com.unity.profiling.core": "1.0.0"
+      },
+      "hash": "1517c80981eab80c722fb92b455f78903be9bb59"
+    },
     "com.unity.addressables": {
       "version": "1.19.9",
       "depth": 0,

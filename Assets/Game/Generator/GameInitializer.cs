@@ -8,6 +8,7 @@ namespace Game.Generator {
     
     using TState = GameState;
     using Game.Modules;
+    using Game.Features;
     using ME.ECS;
     using ME.ECS.Views.Providers;
     using Game.Generator.Modules;
@@ -24,26 +25,24 @@ namespace Game.Generator {
         public float tickTime = 0.033f;
         public uint inputTicks = 3;
         public int entitiesCapacity = 200;
+        
+        [Header("Features")]
+        public PlayersFeature playersFeature;
+        public CombatFeature combatFeature;
 
         public void OnDrawGizmos() {
-
             if (this.world != null) {
-                
                 this.world.OnDrawGizmos();
-                
             }
-            
         }
 
         public void Update() {
-
             if (this.world == null) {
-
                 // Initialize world
                 WorldUtilities.CreateWorld<TState>(ref this.world, this.tickTime);
                 {
                     #if FPS_MODULE_SUPPORT
-                   // this.world.AddModule<FPSModule>();
+                    //this.world.AddModule<FPSModule>();
                     #endif
                     this.world.AddModule<StatesHistoryModule>();
                     this.world.GetModule<StatesHistoryModule>().SetTicksForInput(this.inputTicks);
@@ -57,50 +56,49 @@ namespace Game.Generator {
                     
                     ComponentsInitializer.DoInit();
                     this.world.SetEntitiesCapacity(this.entitiesCapacity);
+                    
+                    // Initialize world
                     this.Initialize(this.world);
                     
+                    // Add BrawlGame features
+                    if (this.playersFeature != null) {
+                        this.world.AddFeature(this.playersFeature);
+                    }
+                    
+                    if (this.combatFeature != null) {
+                        this.world.AddFeature(this.combatFeature);
+                    }
                 }
-                
             }
 
             if (this.world != null && this.world.IsLoading() == false && this.world.IsLoaded() == false) {
-                
                 this.world.SetWorldThread(System.Threading.Thread.CurrentThread);
                 this.world.Load(() => {
-                
                     // Save initialization state
-                    this.world.SaveResetState<TState>();
-
+                   // this.world.SaveResetState<TState>();
                 });
-                
             }
 
             if (this.world != null && this.world.IsLoaded() == true) {
-
                 var dt = Time.deltaTime;
-                this.world.PreUpdate(dt);
+               // this.world.PreUpdate(dt);
                 this.world.Update(dt);
-
             }
-
         }
 
         public void LateUpdate() {
-            
-            if (this.world != null && this.world.IsLoaded() == true) this.world.LateUpdate(Time.deltaTime);
-            
+            if (this.world != null && this.world.IsLoaded() == true) {
+                this.world.LateUpdate(Time.deltaTime);
+            }
         }
 
         public void OnDestroy() {
-            
             if (this.world == null || this.world.isActive == false) return;
             
             this.DeInitializeFeatures(this.world);
             // Release world
             WorldUtilities.ReleaseWorld<TState>(ref this.world);
-
         }
-
     }
     
 }
