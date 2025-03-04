@@ -1,0 +1,56 @@
+flowchart TB
+    subgraph "Game Core"
+        UNITY[Unity Engine]
+        MEECS[ME.ECS Framework]
+        PHOTON[Photon PUN 2]
+        
+        UNITY --- MEECS
+        UNITY --- PHOTON
+        MEECS --- PHOTON
+    end
+    
+    subgraph "ECS Components"
+        C_IDENTITY[Identity Components]
+        C_TRANSFORM[Transform Components]
+        C_PHYSICS[Physics Components]
+        C_PLAYER[Player Components]
+        C_PROJECTILE[Projectile Components]
+        C_NETWORK[Network Components]
+    end
+    
+    subgraph "ECS Systems"
+        S_INIT[Initialization Systems]
+        S_PLAYER[Player Systems]
+        S_PROJECTILE[Projectile Systems]
+        S_COLLISION[Collision Systems]
+        S_NETWORK[Network Systems]
+    end
+    
+    subgraph "Feature Modules"
+        F_CORE[Core Feature]
+        F_PLAYER[Player Feature]
+        F_PROJECTILE[Projectile Feature]
+        F_NETWORK[Network Feature]
+        
+        F_CORE --> F_PLAYER
+        F_CORE --> F_PROJECTILE
+        F_CORE --> F_NETWORK
+    end
+    
+    subgraph "Networking"
+        N_SYNC[State Synchronization]
+        N_INPUT[Input Handling]
+        N_EVENTS[Network Events]
+        
+        N_SYNC --> N_INPUT
+        N_SYNC --> N_EVENTS
+    end
+    
+    MEECS --> C_IDENTITY & C_TRANSFORM & C_PHYSICS & C_PLAYER & C_PROJECTILE & C_NETWORK
+    MEECS --> S_INIT & S_PLAYER & S_PROJECTILE & S_COLLISION & S_NETWORK
+    MEECS --> F_CORE
+    
+    PHOTON --> N_SYNC
+    
+    S_NETWORK --> N_SYNC
+    F_NETWORK --> S_NETWORK
