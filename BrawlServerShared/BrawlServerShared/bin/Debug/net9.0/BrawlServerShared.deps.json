@@ -1,0 +1,302 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "BrawlServerShared/1.0.0": {
+        "dependencies": {
+          "MagicOnion": "7.0.2"
+        },
+        "runtime": {
+          "BrawlServerShared.dll": {}
+        }
+      },
+      "Grpc.AspNetCore.Server/2.57.0": {
+        "dependencies": {
+          "Grpc.Net.Common": "2.57.0"
+        },
+        "runtime": {
+          "lib/net8.0/Grpc.AspNetCore.Server.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.57.0.0"
+          }
+        }
+      },
+      "Grpc.Core.Api/2.57.0": {
+        "runtime": {
+          "lib/netstandard2.1/Grpc.Core.Api.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.57.0.0"
+          }
+        }
+      },
+      "Grpc.Net.Client/2.57.0": {
+        "dependencies": {
+          "Grpc.Net.Common": "2.57.0",
+          "Microsoft.Extensions.Logging.Abstractions": "6.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/Grpc.Net.Client.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.57.0.0"
+          }
+        }
+      },
+      "Grpc.Net.Common/2.57.0": {
+        "dependencies": {
+          "Grpc.Core.Api": "2.57.0"
+        },
+        "runtime": {
+          "lib/net8.0/Grpc.Net.Common.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.57.0.0"
+          }
+        }
+      },
+      "MagicOnion/7.0.2": {
+        "dependencies": {
+          "Grpc.AspNetCore.Server": "2.57.0",
+          "Grpc.Core.Api": "2.57.0",
+          "Grpc.Net.Client": "2.57.0",
+          "MagicOnion.Client": "7.0.2",
+          "MagicOnion.Server": "7.0.2",
+          "MessagePack": "3.1.1",
+          "Multicaster": "1.0.0"
+        }
+      },
+      "MagicOnion.Abstractions/7.0.2": {
+        "dependencies": {
+          "Grpc.Core.Api": "2.57.0",
+          "MessagePack": "3.1.1"
+        },
+        "runtime": {
+          "lib/net8.0/MagicOnion.Abstractions.dll": {
+            "assemblyVersion": "7.0.2.0",
+            "fileVersion": "7.0.2.0"
+          }
+        }
+      },
+      "MagicOnion.Client/7.0.2": {
+        "dependencies": {
+          "Grpc.Core.Api": "2.57.0",
+          "Grpc.Net.Client": "2.57.0",
+          "MagicOnion.Abstractions": "7.0.2",
+          "MagicOnion.Serialization.MessagePack": "7.0.2",
+          "MagicOnion.Shared": "7.0.2",
+          "MessagePack": "3.1.1"
+        },
+        "runtime": {
+          "lib/net9.0/MagicOnion.Client.dll": {
+            "assemblyVersion": "7.0.2.0",
+            "fileVersion": "7.0.2.0"
+          }
+        }
+      },
+      "MagicOnion.Serialization.MessagePack/7.0.2": {
+        "dependencies": {
+          "Grpc.Core.Api": "2.57.0",
+          "MagicOnion.Abstractions": "7.0.2",
+          "MessagePack": "3.1.1"
+        },
+        "runtime": {
+          "lib/net8.0/MagicOnion.Serialization.MessagePack.dll": {
+            "assemblyVersion": "7.0.2.0",
+            "fileVersion": "7.0.2.0"
+          }
+        }
+      },
+      "MagicOnion.Server/7.0.2": {
+        "dependencies": {
+          "Grpc.AspNetCore.Server": "2.57.0",
+          "Grpc.Core.Api": "2.57.0",
+          "MagicOnion.Abstractions": "7.0.2",
+          "MagicOnion.Serialization.MessagePack": "7.0.2",
+          "MagicOnion.Shared": "7.0.2",
+          "MessagePack": "3.1.1",
+          "Multicaster": "1.0.0"
+        },
+        "runtime": {
+          "lib/net9.0/MagicOnion.Server.dll": {
+            "assemblyVersion": "7.0.2.0",
+            "fileVersion": "7.0.2.0"
+          }
+        }
+      },
+      "MagicOnion.Shared/7.0.2": {
+        "dependencies": {
+          "Grpc.Core.Api": "2.57.0",
+          "MagicOnion.Abstractions": "7.0.2",
+          "MagicOnion.Serialization.MessagePack": "7.0.2",
+          "MessagePack": "3.1.1"
+        },
+        "runtime": {
+          "lib/net8.0/MagicOnion.Shared.dll": {
+            "assemblyVersion": "7.0.2.0",
+            "fileVersion": "7.0.2.0"
+          }
+        }
+      },
+      "MessagePack/3.1.1": {
+        "dependencies": {
+          "MessagePack.Annotations": "3.1.1",
+          "MessagePackAnalyzer": "3.1.1",
+          "Microsoft.NET.StringTools": "17.11.4"
+        },
+        "runtime": {
+          "lib/net9.0/MessagePack.dll": {
+            "assemblyVersion": "3.1.1.0",
+            "fileVersion": "3.1.1.0"
+          }
+        }
+      },
+      "MessagePack.Annotations/3.1.1": {
+        "runtime": {
+          "lib/netstandard2.0/MessagePack.Annotations.dll": {
+            "assemblyVersion": "3.1.1.0",
+            "fileVersion": "3.1.1.0"
+          }
+        }
+      },
+      "MessagePackAnalyzer/3.1.1": {},
+      "Microsoft.Extensions.Logging.Abstractions/6.0.0": {},
+      "Microsoft.NET.StringTools/17.11.4": {
+        "runtime": {
+          "lib/net8.0/Microsoft.NET.StringTools.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "17.11.4.40609"
+          }
+        }
+      },
+      "Multicaster/1.0.0": {
+        "runtime": {
+          "lib/net9.0/Cysharp.Runtime.Multicaster.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "BrawlServerShared/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Grpc.AspNetCore.Server/2.57.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-g4JKqJ3RB7WKOrBxMSCkRc/1Xa5GqYlVb7k8OjUsERKW7LdSQ0ajcFMZ4Q79BZgA/xbJlGttmq4ewyzpBqGetA==",
+      "path": "grpc.aspnetcore.server/2.57.0",
+      "hashPath": "grpc.aspnetcore.server.2.57.0.nupkg.sha512"
+    },
+    "Grpc.Core.Api/2.57.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-48jpfMyYdhaPS6PGnk7sEqSO3+c/w11ahY+a33ymo0BsQEsBVIoJoS5xMsl5RzBlpKY41PnN+qJGMm3VyE5OQg==",
+      "path": "grpc.core.api/2.57.0",
+      "hashPath": "grpc.core.api.2.57.0.nupkg.sha512"
+    },
+    "Grpc.Net.Client/2.57.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vVDW0ePnaH9Na+wjm64vpzdj05JEjOCmAXUlANVc+s3hBBreEizfbmlzWPjsL6ZskaSrA59Ckb0J2l1HMvtMHQ==",
+      "path": "grpc.net.client/2.57.0",
+      "hashPath": "grpc.net.client.2.57.0.nupkg.sha512"
+    },
+    "Grpc.Net.Common/2.57.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-babJpsAwVH3lPjg8cvWGqW+Fos1RN+cqudfkW2EyB2DK2v5yjD2axZ1Uay6kR6ec2/p9ljodktrfoJ2lJ/pwnQ==",
+      "path": "grpc.net.common/2.57.0",
+      "hashPath": "grpc.net.common.2.57.0.nupkg.sha512"
+    },
+    "MagicOnion/7.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Yr/a9AAk5JITxiizCSogVBEdjzhkjVOjAMUNt2etMJ87NbTsnwqMSkTg4qi0PVKjzO9VqrrfvHq++ySDDFhW9A==",
+      "path": "magiconion/7.0.2",
+      "hashPath": "magiconion.7.0.2.nupkg.sha512"
+    },
+    "MagicOnion.Abstractions/7.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mXALhFB/b/ayaz42VSQbgf0qDZnndhUaNzxOi9Ql8yVfwZQ8CKESlFVo1MVpFZMf7rT7aYiWxkj6SiCpjqFAMQ==",
+      "path": "magiconion.abstractions/7.0.2",
+      "hashPath": "magiconion.abstractions.7.0.2.nupkg.sha512"
+    },
+    "MagicOnion.Client/7.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-z1uX8jiuTgtzh9EBZD/7Gz/WhpgYa53wclFOaUh8/sGXgFRhKmTQAIECkl8to6TIidLQCR9VsBlS8UrbpxbRLA==",
+      "path": "magiconion.client/7.0.2",
+      "hashPath": "magiconion.client.7.0.2.nupkg.sha512"
+    },
+    "MagicOnion.Serialization.MessagePack/7.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-a/kFqsh/AfZ6NPlM+EOaPNLvLlwnB1AadxmPeG8yznUWxvxWd47DhhXc1h08zmKa6LArDBTFS5zTLR/aypkjyQ==",
+      "path": "magiconion.serialization.messagepack/7.0.2",
+      "hashPath": "magiconion.serialization.messagepack.7.0.2.nupkg.sha512"
+    },
+    "MagicOnion.Server/7.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-RXzdFeuVsbrBKgGp2qd0YnxSuQ1zExPm51ZRzRmKI6bkqsl8rkQIeP2hET5IM5xaaAEK6EwteDU9qc47rUZ3KQ==",
+      "path": "magiconion.server/7.0.2",
+      "hashPath": "magiconion.server.7.0.2.nupkg.sha512"
+    },
+    "MagicOnion.Shared/7.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-uyplgJuXHtpTw/1I9/fDRWaOT92BTNe2DmzYru06tXyFFcONqrDVP7TZ0dXLasP+vezVZH9ttS9E/ZO2xNpenA==",
+      "path": "magiconion.shared/7.0.2",
+      "hashPath": "magiconion.shared.7.0.2.nupkg.sha512"
+    },
+    "MessagePack/3.1.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-nC7/arPbdsjcvDwLrdp2aJafk3Y8GbjoomvY1oFCJbODAmgURM9JVKrkIcaZSX1GOLtPSQH4/6rM/TNtSx+U4Q==",
+      "path": "messagepack/3.1.1",
+      "hashPath": "messagepack.3.1.1.nupkg.sha512"
+    },
+    "MessagePack.Annotations/3.1.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-z/qHzXoz+SAw8+MDZV6Woge1fWD27v+Ce+9a3AJU7FF7TmXpIvGmALsS0A83RdM0P1utLuJ8UJlhNmjpDJ4y4A==",
+      "path": "messagepack.annotations/3.1.1",
+      "hashPath": "messagepack.annotations.3.1.1.nupkg.sha512"
+    },
+    "MessagePackAnalyzer/3.1.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-gQeHB5RKo7C033FoUToZsvpabWuBR4ajiDoA0dXVTf7SdrA8sB0EGE04t37dDJ+8jIZ9/rCNYUmE67xKPgPThA==",
+      "path": "messagepackanalyzer/3.1.1",
+      "hashPath": "messagepackanalyzer.3.1.1.nupkg.sha512"
+    },
+    "Microsoft.Extensions.Logging.Abstractions/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-/HggWBbTwy8TgebGSX5DBZ24ndhzi93sHUBDvP1IxbZD7FDokYzdAr6+vbWGjw2XAfR2EJ1sfKUotpjHnFWPxA==",
+      "path": "microsoft.extensions.logging.abstractions/6.0.0",
+      "hashPath": "microsoft.extensions.logging.abstractions.6.0.0.nupkg.sha512"
+    },
+    "Microsoft.NET.StringTools/17.11.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-mudqUHhNpeqIdJoUx2YDWZO/I9uEDYVowan89R6wsomfnUJQk6HteoQTlNjZDixhT2B4IXMkMtgZtoceIjLRmA==",
+      "path": "microsoft.net.stringtools/17.11.4",
+      "hashPath": "microsoft.net.stringtools.17.11.4.nupkg.sha512"
+    },
+    "Multicaster/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-sQYvpHmaowidLMYKCfrxPcPH2iJT7U+eSkZofzkr4rpoXgtZWcDUvAUSIV4l4TFQnUMUF7n41ShCN3Jy4Cw7oQ==",
+      "path": "multicaster/1.0.0",
+      "hashPath": "multicaster.1.0.0.nupkg.sha512"
+    }
+  }
+}

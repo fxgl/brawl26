@@ -29,10 +29,12 @@ namespace Game.Modules {
 
         protected override void OnInitialize() {
 
-            // TODO: Set your transport layer and serializer
-            // var instance = (ME.ECS.Network.INetworkModuleBase)this;
-            // instance.SetTransporter(new CustomTransport()); // ITransporter
-            // instance.SetSerializer(new CustomSerializer()); // ISerializer
+            // Set SignalR transport layer
+            var instance = (ME.ECS.Network.INetworkModuleBase)this;
+            instance.SetTransporter(new SignalRTransporter("http://localhost:5000/gameHub"));
+            
+            // Use default serializer
+            // instance.SetSerializer(new ME.ECS.Network.Serializers.ProtobufSerializer());
 
         }
 

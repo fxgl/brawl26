@@ -2,7 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Grpc.Core;
+// using Grpc.Core;
 
 namespace BrawlServer.Network
 {
@@ -58,57 +58,57 @@ namespace BrawlServer.Network
                 return;
             }
             
-            // Convert to server message
-            var message = new Proto.ServerMessage
-            {
-                // Wrap the raw bytes in a GameEvent message
-                GameEvent = new Proto.GameEvent
-                {
-                    EventType = isSystem ? 0 : 1, // 0 for system, 1 for regular event
-                    EventData = Google.Protobuf.ByteString.CopyFrom(bytes)
-                }
-            };
-            
-            try
-            {
-                await connection.SendMessage(message);
-                _sentBytesCount += bytes.Length;
-                _sentCount++;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error sending message to player {playerId}: {ex.Message}");
-            }
+            // // Convert to server message
+            // var message = new Proto.ServerMessage
+            // {
+            //     // Wrap the raw bytes in a GameEvent message
+            //     GameEvent = new Proto.GameEvent
+            //     {
+            //         EventType = isSystem ? 0 : 1, // 0 for system, 1 for regular event
+            //         EventData = Google.Protobuf.ByteString.CopyFrom(bytes)
+            //     }
+            // };
+            //
+            // try
+            // {
+            //     await connection.SendMessage(message);
+            //     _sentBytesCount += bytes.Length;
+            //     _sentCount++;
+            //}
+            // catch (Exception ex)
+            // {
+            //     Console.WriteLine($"Error sending message to player {playerId}: {ex.Message}");
+            // }
         }
         
         private async Task Broadcast(byte[] bytes, bool isSystem)
         {
-            // Convert to server message
-            var message = new Proto.ServerMessage
-            {
-                // Wrap the raw bytes in a GameEvent message
-                GameEvent = new Proto.GameEvent
-                {
-                    EventType = isSystem ? 0 : 1, // 0 for system, 1 for regular event
-                    EventData = Google.Protobuf.ByteString.CopyFrom(bytes)
-                }
-            };
+            // // Convert to server message
+            // var message = new Proto.ServerMessage
+            // {
+            //     // Wrap the raw bytes in a GameEvent message
+            //     GameEvent = new Proto.GameEvent
+            //     {
+            //         EventType = isSystem ? 0 : 1, // 0 for system, 1 for regular event
+            //         EventData = Google.Protobuf.ByteString.CopyFrom(bytes)
+            //     }
+            // };
+            //
+            // // Send to all connected players
+            // var tasks = new List<Task>();
+            // foreach (var connection in _connections.Values)
+            // {
+            //     tasks.Add(connection.SendMessage(message));
+            // }
             
-            // Send to all connected players
-            var tasks = new List<Task>();
-            foreach (var connection in _connections.Values)
-            {
-                tasks.Add(connection.SendMessage(message));
-            }
-            
-            try
-            {
-                await Task.WhenAll(tasks);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error broadcasting message: {ex.Message}");
-            }
+            // try
+            // {
+            //     await Task.WhenAll(tasks);
+            // }
+            // catch (Exception ex)
+            // {
+            //     Console.WriteLine($"Error broadcasting message: {ex.Message}");
+            // }
         }
         
         // Process received data from a client
@@ -143,27 +143,27 @@ namespace BrawlServer.Network
     // Helper class to manage individual client connections
     public class PlayerConnection
     {
-        private readonly IServerStreamWriter<Proto.ServerMessage> _stream;
-        private readonly object _lock = new object();
-        
-        public PlayerConnection(IServerStreamWriter<Proto.ServerMessage> stream)
-        {
-            _stream = stream;
-        }
-        
-        public Task SendMessage(Proto.ServerMessage message)
-        {
-            try
-            {
-                // Write to the stream - no lock needed as gRPC writer handles concurrent access
-                Task task = _stream.WriteAsync(message);
-                return task;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error sending message to client: {ex.Message}");
-                throw;
-            }
-        }
+        // private readonly IServerStreamWriter<Proto.ServerMessage> _stream;
+        // private readonly object _lock = new object();
+        //
+        // public PlayerConnection(IServerStreamWriter<Proto.ServerMessage> stream)
+        // {
+        //     _stream = stream;
+        // }
+        //
+        // public Task SendMessage(Proto.ServerMessage message)
+        // {
+        //     try
+        //     {
+        //         // Write to the stream - no lock needed as gRPC writer handles concurrent access
+        //         Task task = _stream.WriteAsync(message);
+        //         return task;
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         Console.WriteLine($"Error sending message to client: {ex.Message}");
+        //         throw;
+        //     }
+        // }
     }
 }
