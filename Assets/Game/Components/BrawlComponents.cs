@@ -49,4 +49,19 @@ namespace Game.Components {
         public Vector2 moveDirection;
         public bool attackPressed;
     }
+    
+    // Collision components
+    public struct CollisionRadiusComponent : IStructComponent {
+        public float radius;
+    }
+    
+    public struct CollisionLayerComponent : IStructComponent {
+        public int layer;
+    }
+    
+    public struct CollisionMaskComponent : IStructComponent {
+        public int mask;
+    }
+    
+    public struct SolidBodyTag : IStructComponent {}
 }

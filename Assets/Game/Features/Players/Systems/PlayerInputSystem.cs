@@ -40,21 +40,31 @@ namespace Game.Features.Players.Systems {
                 Input.GetAxis("Vertical")
             );
             
-            bool attackButton = Input.GetMouseButtonDown(0);
-            
-            // Find local player entity and apply input
-            foreach (var entity in this.filter) {
-                var playerId = entity.Read<PlayerIdComponent>().id;
+            bool attackButton = Input.GetButton("Jump");
+            if (attackButton || movementInput.sqrMagnitude > 0.1f)
+            {
                 
-                // Only process input for local player
-                if (playerId == this.localPlayerId) {
-                    // Apply input component
-                    entity.Set(new InputComponent {
-                        moveDirection = movementInput,
-                        attackPressed = attackButton
-                    });
-                    
-                    break; // Found local player, no need to continue
+                // Find local player entity and apply input
+                foreach (var entity in this.filter)
+                {
+                    var playerId = entity.Read<PlayerIdComponent>().id;
+
+                    // Only process input for local player
+                    if (playerId == this.localPlayerId)
+                    {
+                        var input = new InputComponent
+                        {
+                            moveDirection = movementInput,
+                            attackPressed = attackButton
+                        };
+                        // Apply input component
+                        entity.Set(input);
+                       // Debug.Log($"Input received: {localPlayerId} - Movement: {movementInput}, Attack: {attackButton}");
+
+
+                        break; // Found local player, no need to continue
+
+                    }
                 }
             }
         }

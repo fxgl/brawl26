@@ -57,3 +57,4 @@ crashlytics-build.properties
 .Trashes
 ehthumbs.db
 Thumbs.db
+mono_crash.*.json

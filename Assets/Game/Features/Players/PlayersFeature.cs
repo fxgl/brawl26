@@ -30,36 +30,55 @@ namespace Game.Features {
         public float attackDamage = 10f;
         public float attackCooldown = 0.5f;
         
+        [Header("Debug")]
+        public bool enableLogs = true;
+        
         // Reference to player prefab for view
         public GameObject playerPrefab;
 
         protected override void OnConstruct() {
+            if (enableLogs) Debug.Log("[PlayersFeature] OnConstruct started");
+            
+            if (this.playerView == null) {
+                Debug.LogError("[PlayersFeature] PlayerView is null! Please assign it in the inspector.");
+                return;
+            }
+            
             this.playerViewId = this.world.RegisterViewSource(this.playerView);
+            if (enableLogs) Debug.Log($"[PlayersFeature] Registered player view with ID: {this.playerViewId}");
 
             // Add player systems
             this.AddSystem<PlayerSpawnSystem>();
             this.AddSystem<PlayerInputSystem>();
             this.AddSystem<PlayerMovementSystem>();
             this.AddSystem<PlayerAttackSystem>();
+            if (enableLogs) Debug.Log("[PlayersFeature] Added player systems");
             
-            // Register player view
-            if (playerPrefab != null) {
-                // Register the player prefab for view instantiation
-                this.world.RegisterViewSource(this.playerPrefab);
-            }
+            
         }
 
         protected override void OnDeconstruct() {
+            if (enableLogs) Debug.Log("[PlayersFeature] OnDeconstruct called - cleaning up resources");
             // Clean up resources
         }
         
         // Public API for spawning players
         public Entity SpawnPlayer(int playerId) {
+            if (enableLogs) Debug.Log($"[PlayersFeature] SpawnPlayer called for player ID: {playerId}");
+            
             var entity = this.world.AddEntity();
+            if (enableLogs) Debug.Log($"[PlayersFeature] Created entity: {entity}");
             
             // Add player components
             entity.Set(new PlayerTag());
-            entity.InstantiateView(this.playerViewId);
+            
+            if (this.playerViewId<=0) {
+                Debug.LogError("[PlayersFeature] Invalid playerViewId. Cannot instantiate view!");
+            } else {
+                entity.InstantiateView(this.playerViewId);
+                if (enableLogs) Debug.Log($"[PlayersFeature] Instantiated view {playerViewId} for entity: {entity}");
+            }
+            
             entity.Set(new PlayerIdComponent { id = playerId });
             entity.Set(new HealthComponent { current = this.maxHealth, max = this.maxHealth });
             
@@ -76,10 +95,34 @@ namespace Game.Features {
             });
             entity.Set(new DamageableTag());
             
+            // Add collision components
+            var collisionFeature = this.world.GetFeature<Features.Collision.CollisionFeature>();
+            float collisionRadius = 1.0f;
+            int playerLayer = 0;
+            
+            if (collisionFeature != null) {
+                collisionRadius = collisionFeature.defaultCollisionRadius;
+                playerLayer = collisionFeature.playerLayer;
+                
+                // Player mask - collide with everything except other players
+                int playerMask = ~(1 << playerLayer);
+                entity.Set(new CollisionMaskComponent { mask = playerMask });
+                entity.Set(new CollisionLayerComponent { layer = 1 });
+            }
+            
+            entity.Set(new CollisionRadiusComponent { radius = collisionRadius });
+            entity.Set(new SolidBodyTag());
+            
             // Add to game state
             var state = this.world.GetState<GameState>();
-            state.players[playerId] = entity;
+            if (state == null) {
+                Debug.LogError("[PlayersFeature] GameState is null! Cannot add player to state.");
+            } else {
+                state.players[playerId] = entity;
+                if (enableLogs) Debug.Log($"[PlayersFeature] Added player {playerId} to game state");
+            }
             
+            if (enableLogs) Debug.Log($"[PlayersFeature] Player {playerId} spawned successfully with entity: {entity}");
             return entity;
         }
     }

@@ -18,8 +18,8 @@ namespace Game.Features.Combat.Systems {
         public World world { get; set; }
         
         private Filter projectileFilter;
-        private Filter damageableFilter;
         private CombatFeature combatFeature;
+        private Features.Collision.CollisionFeature collisionFeature;
         
         private float projectileLifetime;
         
@@ -32,15 +32,11 @@ namespace Game.Features.Combat.Systems {
                 .With<AttackComponent>()
                 .Push();
                 
-            // Filter for damageable entities
-            this.damageableFilter = Filter.Create("Filter-Damageable")
-                .With<DamageableTag>()
-                .With<HealthComponent>()
-                .With<PositionComponent>()
-                .Push();
-                
             this.combatFeature = this.world.GetFeature<CombatFeature>();
             this.projectileLifetime = this.combatFeature.projectileLifetime;
+            
+            // Get collision feature
+            this.collisionFeature = this.world.GetFeature<Features.Collision.CollisionFeature>();
         }
         
         void ISystemBase.OnDeconstruct() {}
@@ -51,11 +47,11 @@ namespace Game.Features.Combat.Systems {
                 // Get components
                 var position = entity.Read<PositionComponent>();
                 var velocity = entity.Read<VelocityComponent>();
-                var owner = entity.Read<ProjectileOwnerComponent>().owner;
                 var attack = entity.Read<AttackComponent>();
                 
                 // Update lifetime
                 attack.lastAttackTime += deltaTime;
+                entity.Set(attack);
                 
                 // Check if projectile has expired
                 if (attack.lastAttackTime >= this.projectileLifetime) {
@@ -68,29 +64,20 @@ namespace Game.Features.Combat.Systems {
                 Vector3 newPosition = position.value + velocity.value * deltaTime;
                 entity.Set(new PositionComponent { value = newPosition });
                 
-                // Check for collisions
-                float hitRadius = 0.5f; // Collision radius
+                // Ensure projectile has a collision radius component
+                if (!entity.Has<CollisionRadiusComponent>()) {
+                    entity.Set(new CollisionRadiusComponent { 
+                        radius = this.collisionFeature != null ? 
+                                 this.collisionFeature.defaultCollisionRadius : 
+                                 0.5f 
+                    });
+                }
                 
-                foreach (var targetEntity in this.damageableFilter) {
-                    // Skip owner
-                    if (targetEntity == owner) continue;
-                    
-                    var targetPos = targetEntity.Read<PositionComponent>();
-                    float distance = Vector3.Distance(newPosition, targetPos.value);
-                    
-                    // Check if hit
-                    if (distance < hitRadius) {
-                        // Apply damage to target
-                        var health = targetEntity.Read<HealthComponent>();
-                        health.current -= attack.damage;
-                        targetEntity.Set(health);
-                        
-                        Debug.Log($"Projectile hit target: Damage={attack.damage}, RemainingHealth={health.current}");
-                        
-                        // Destroy projectile after hit
-                        entity.Destroy();
-                        break;
-                    }
+                // Ensure projectile has layer setup for collision filtering
+                if (!entity.Has<CollisionLayerComponent>() && this.collisionFeature != null) {
+                    entity.Set(new CollisionLayerComponent { 
+                        layer = this.collisionFeature.projectileLayer 
+                    });
                 }
             }
         }

@@ -26,9 +26,6 @@ namespace Game.Generator {
         public uint inputTicks = 3;
         public int entitiesCapacity = 200;
         
-        [Header("Features")]
-        public PlayersFeature playersFeature;
-        public CombatFeature combatFeature;
 
   
         public void OnDrawGizmos() {
@@ -62,16 +59,7 @@ namespace Game.Generator {
                     // Initialize world
                     this.Initialize(this.world);
                     
-                    // // Add BrawlGame features
-                     if (this.playersFeature != null) {
-                         this.world.AddFeature(this.playersFeature );
-                     }
-                    
-                   // this.world.AddFeature(new PlayersFeature() );
-                    
-                   // if (this.combatFeature != null) {
-                        this.world.AddFeature(new CombatFeature());
-                   // }
+                   
                 }
             }
 

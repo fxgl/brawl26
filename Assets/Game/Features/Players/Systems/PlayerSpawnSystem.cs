@@ -56,7 +56,7 @@ namespace Game.Features.Players.Systems {
                 );
                 playerEntity.Set(new PositionComponent { value = randomPosition });
                 
-                Debug.Log($"Spawned player with ID: {playerId}");
+                Debug.Log($"Spawned player with ID: {playerId} {playerEntity} {playerEntity.Get<PositionComponent>().value}");
             }
         }
     }

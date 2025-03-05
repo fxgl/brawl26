@@ -9,11 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1afea2b0121e34fc3bc5d40bb80c9417, type: 3}
-  m_Name: CombatFeature
+  m_Script: {fileID: 11500000, guid: f71728c379a02486ca85a798d06427d0, type: 3}
+  m_Name: CollisionFeature
   m_EditorClassIdentifier: 
   editorComment: 
-  damageMultiplier: 1
-  projectileSpeed: 10
-  projectileLifetime: 5
-  projectilePrefab: {fileID: 0}
+  maxCollisionsPerFrame: 100
+  defaultCollisionRadius: 0.5
+  playerLayer: 0
+  enemyLayer: 1
+  projectileLayer: 2
+  obstacleLayer: 3

@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: PlayersFeature
   m_EditorClassIdentifier: 
   editorComment: 
-  playerView: {fileID: 0}
+  playerView: {fileID: 8606183726515903045, guid: 7009368c00bf64956b533c5c4e9511c7, type: 3}
   moveSpeed: 5
   maxHealth: 100
   attackDamage: 10
   attackCooldown: 0.5
+  enableLogs: 1
   playerPrefab: {fileID: 2555181334536742559, guid: 7009368c00bf64956b533c5c4e9511c7, type: 3}

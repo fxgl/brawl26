@@ -10,6 +10,9 @@ namespace ME.ECS {
 
 
             WorldUtilities.InitComponentTypeId<Game.Components.AttackComponent>(false, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Components.CollisionLayerComponent>(false, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Components.CollisionMaskComponent>(false, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Components.CollisionRadiusComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.HealthComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.InputComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.PlayerIdComponent>(false, true, true, false, false, false, false, false, false, false);
@@ -17,10 +20,11 @@ namespace ME.ECS {
             WorldUtilities.InitComponentTypeId<Game.Components.ProjectileOwnerComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.RotationComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.VelocityComponent>(false, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Features.Collision.Markers.CollisionEventComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.DamageableTag>(true, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.PlayerTag>(true, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.ProjectileTag>(true, true, true, false, false, false, false, false, false, false);
-            WorldUtilities.InitComponentTypeId<Game.Features.Players.NewComponent>(true, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Components.SolidBodyTag>(true, true, true, false, false, false, false, false, false, false);
 
         }
 
@@ -32,6 +36,9 @@ namespace ME.ECS {
 
 
             WorldUtilities.InitComponentTypeId<Game.Components.AttackComponent>(false, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Components.CollisionLayerComponent>(false, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Components.CollisionMaskComponent>(false, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Components.CollisionRadiusComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.HealthComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.InputComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.PlayerIdComponent>(false, true, true, false, false, false, false, false, false, false);
@@ -39,16 +46,20 @@ namespace ME.ECS {
             WorldUtilities.InitComponentTypeId<Game.Components.ProjectileOwnerComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.RotationComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.VelocityComponent>(false, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Features.Collision.Markers.CollisionEventComponent>(false, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.DamageableTag>(true, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.PlayerTag>(true, true, true, false, false, false, false, false, false, false);
             WorldUtilities.InitComponentTypeId<Game.Components.ProjectileTag>(true, true, true, false, false, false, false, false, false, false);
-            WorldUtilities.InitComponentTypeId<Game.Features.Players.NewComponent>(true, true, true, false, false, false, false, false, false, false);
+            WorldUtilities.InitComponentTypeId<Game.Components.SolidBodyTag>(true, true, true, false, false, false, false, false, false, false);
 
             ComponentsInitializerWorld.Setup(ComponentsInitializerWorldGen.Init);
             CoreComponentsInitializer.Init(state, ref noState);
 
 
             state.structComponents.ValidateUnmanaged<Game.Components.AttackComponent>(ref state.allocator, false);
+            state.structComponents.ValidateUnmanaged<Game.Components.CollisionLayerComponent>(ref state.allocator, false);
+            state.structComponents.ValidateUnmanaged<Game.Components.CollisionMaskComponent>(ref state.allocator, false);
+            state.structComponents.ValidateUnmanaged<Game.Components.CollisionRadiusComponent>(ref state.allocator, false);
             state.structComponents.ValidateUnmanaged<Game.Components.HealthComponent>(ref state.allocator, false);
             state.structComponents.ValidateUnmanaged<Game.Components.InputComponent>(ref state.allocator, false);
             state.structComponents.ValidateUnmanaged<Game.Components.PlayerIdComponent>(ref state.allocator, false);
@@ -56,10 +67,11 @@ namespace ME.ECS {
             state.structComponents.ValidateUnmanaged<Game.Components.ProjectileOwnerComponent>(ref state.allocator, false);
             state.structComponents.ValidateUnmanaged<Game.Components.RotationComponent>(ref state.allocator, false);
             state.structComponents.ValidateUnmanaged<Game.Components.VelocityComponent>(ref state.allocator, false);
+            state.structComponents.ValidateUnmanaged<Game.Features.Collision.Markers.CollisionEventComponent>(ref state.allocator, false);
             state.structComponents.ValidateUnmanaged<Game.Components.DamageableTag>(ref state.allocator, true);
             state.structComponents.ValidateUnmanaged<Game.Components.PlayerTag>(ref state.allocator, true);
             state.structComponents.ValidateUnmanaged<Game.Components.ProjectileTag>(ref state.allocator, true);
-            state.structComponents.ValidateUnmanaged<Game.Features.Players.NewComponent>(ref state.allocator, true);
+            state.structComponents.ValidateUnmanaged<Game.Components.SolidBodyTag>(ref state.allocator, true);
 
         }
 
@@ -71,6 +83,9 @@ namespace ME.ECS {
 
 
             entity.ValidateDataUnmanaged<Game.Components.AttackComponent>(false);
+            entity.ValidateDataUnmanaged<Game.Components.CollisionLayerComponent>(false);
+            entity.ValidateDataUnmanaged<Game.Components.CollisionMaskComponent>(false);
+            entity.ValidateDataUnmanaged<Game.Components.CollisionRadiusComponent>(false);
             entity.ValidateDataUnmanaged<Game.Components.HealthComponent>(false);
             entity.ValidateDataUnmanaged<Game.Components.InputComponent>(false);
             entity.ValidateDataUnmanaged<Game.Components.PlayerIdComponent>(false);
@@ -78,10 +93,11 @@ namespace ME.ECS {
             entity.ValidateDataUnmanaged<Game.Components.ProjectileOwnerComponent>(false);
             entity.ValidateDataUnmanaged<Game.Components.RotationComponent>(false);
             entity.ValidateDataUnmanaged<Game.Components.VelocityComponent>(false);
+            entity.ValidateDataUnmanaged<Game.Features.Collision.Markers.CollisionEventComponent>(false);
             entity.ValidateDataUnmanaged<Game.Components.DamageableTag>(true);
             entity.ValidateDataUnmanaged<Game.Components.PlayerTag>(true);
             entity.ValidateDataUnmanaged<Game.Components.ProjectileTag>(true);
-            entity.ValidateDataUnmanaged<Game.Features.Players.NewComponent>(true);
+            entity.ValidateDataUnmanaged<Game.Components.SolidBodyTag>(true);
 
         }
 
