@@ -1,0 +1,133 @@
+syntax = "proto3";
+
+package brawl;
+
+option csharp_namespace = "BrawlServer.Proto";
+
+// Main service definition
+service BrawlGame {
+  // Two-way streaming for real-time communication
+  rpc GameSession (stream ClientMessage) returns (stream ServerMessage);
+  
+  // Method for initial connection and handshake
+  rpc Connect (ConnectRequest) returns (ConnectResponse);
+}
+
+// Client to server messages
+message ClientMessage {
+  oneof payload {
+    PlayerInput playerInput = 1;
+    PlayerAction playerAction = 2;
+    Ping ping = 3;
+  }
+  uint32 tick = 10;
+  int32 playerId = 11;
+}
+
+// Server to client messages
+message ServerMessage {
+  oneof payload {
+    GameState gameState = 1;
+    EntityUpdate entityUpdate = 2;
+    PlayerSpawn playerSpawn = 3;
+    GameEvent gameEvent = 4;
+    Pong pong = 5;
+  }
+  uint32 tick = 10;
+}
+
+// Player input data
+message PlayerInput {
+  float moveX = 1;
+  float moveY = 2;
+  bool attackPressed = 3;
+}
+
+// Input action
+message PlayerAction {
+  int32 actionType = 1;
+  bytes actionData = 2;
+}
+
+// Game state for synchronization
+message GameState {
+  repeated Entity entities = 1;
+  float roundTime = 2;
+  bool gameInProgress = 3;
+}
+
+// Entity data
+message Entity {
+  int32 id = 1;
+  Position position = 2;
+  optional Rotation rotation = 3;
+  optional Health health = 4;
+  optional int32 playerId = 5;
+}
+
+// Entity update (partial)
+message EntityUpdate {
+  int32 entityId = 1;
+  repeated ComponentUpdate components = 2;
+}
+
+// Network connection
+message ConnectRequest {
+  string clientId = 1;
+  string clientVersion = 2;
+}
+
+message ConnectResponse {
+  bool success = 1;
+  string error = 2;
+  int32 assignedPlayerId = 3;
+}
+
+// Position component
+message Position {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
+
+// Rotation component
+message Rotation {
+  float x = 1;
+  float y = 2;
+  float z = 3;
+  float w = 4;
+}
+
+// Health component
+message Health {
+  float current = 1;
+  float max = 2;
+}
+
+// Component update
+message ComponentUpdate {
+  int32 typeId = 1;
+  bytes data = 2;
+}
+
+// Player spawn event
+message PlayerSpawn {
+  int32 playerId = 1;
+  Entity entity = 2;
+}
+
+// Game event
+message GameEvent {
+  int32 eventType = 1;
+  bytes eventData = 2;
+}
+
+// Latency tracking
+message Ping {
+  int64 sentTime = 1;
+}
+
+message Pong {
+  int64 clientSentTime = 1;
+  int64 serverSentTime = 2;
+}

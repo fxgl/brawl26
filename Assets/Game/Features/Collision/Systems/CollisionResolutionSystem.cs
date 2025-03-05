@@ -21,6 +21,18 @@ namespace Game.Features.Collision.Systems {
         private Filter collisionsFilter;
         private CollisionFeature feature;
         
+        // Add logging control
+        private static bool EnableLogs = false;
+        
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("Game/Debug/Collision Resolution System/Toggle Logs")]
+        public static void ToggleLogs()
+        {
+            EnableLogs = !EnableLogs;
+            Debug.Log($"Player Movement System logs are now {(EnableLogs ? "enabled" : "disabled")}");
+        }
+#endif
+        
         void ISystemBase.OnConstruct() {
             this.projectilesFilter = Filter.Create("Filter-Projectiles-Collision")
                 .With<ProjectileTag>()
@@ -63,15 +75,27 @@ namespace Game.Features.Collision.Systems {
                             health.current -= damage;
                             target.Set(health);
                             
-                            Debug.Log($"Collision resolution: Projectile hit target: Damage={damage}, RemainingHealth={health.current}");
+                            // Only log if logging is enabled
+                            if (EnableLogs) {
+                                Debug.Log($"Collision resolution: Projectile hit target: Damage={damage}, RemainingHealth={health.current}");
+                            }
                         }
+                    }
+                    else if (EnableLogs) {
+                        Debug.Log($"Collision resolution: Projectile hit non-damageable entity");
                     }
                     
                     // Destroy the projectile
                     projectile.Destroy();
+                    if (EnableLogs) {
+                        Debug.Log($"Collision resolution: Projectile destroyed");
+                    }
                 }
                 // Case 2: Both entities are solid bodies
                 else if (entity1.Has<SolidBodyTag>() && entity2.Has<SolidBodyTag>()) {
+                    if (EnableLogs) {
+                        Debug.Log($"Collision resolution: Physical collision between solid bodies");
+                    }
                     // Implement physical collision resolution
                     ResolvePhysicalCollision(entity1, entity2, collision.normal, collision.penetrationDepth);
                 }
@@ -81,10 +105,20 @@ namespace Game.Features.Collision.Systems {
         
         private void ResolvePhysicalCollision(Entity entityA, Entity entityB, Vector3 normal, float penetrationDepth) {
             // Skip if either entity is destroyed
-            if (entityA.IsAlive() == false || entityB.IsAlive() == false) return;
+            if (entityA.IsAlive() == false || entityB.IsAlive() == false) {
+                if (EnableLogs) {
+                    Debug.Log("Collision resolution: Skipping physical resolution - entity not alive");
+                }
+                return;
+            }
             
             // Physical resolution only works for entities with position
-            if (!entityA.Has<PositionComponent>() || !entityB.Has<PositionComponent>()) return;
+            if (!entityA.Has<PositionComponent>() || !entityB.Has<PositionComponent>()) {
+                if (EnableLogs) {
+                    Debug.Log("Collision resolution: Skipping physical resolution - missing position component");
+                }
+                return;
+            }
             
             // Get positions
             var posA = entityA.Read<PositionComponent>();
@@ -101,6 +135,10 @@ namespace Game.Features.Collision.Systems {
             // Apply position changes
             entityA.Set(posA);
             entityB.Set(posB);
+            
+            if (EnableLogs) {
+                Debug.Log($"Collision resolution: Applied position correction - Penetration={penetrationDepth}, Normal={normal}");
+            }
             
             // Adjust velocity if entities have it
             if (entityA.Has<VelocityComponent>() && entityB.Has<VelocityComponent>()) {
@@ -126,6 +164,10 @@ namespace Game.Features.Collision.Systems {
                     // Apply velocity changes
                     entityA.Set(velA);
                     entityB.Set(velB);
+                    
+                    if (EnableLogs) {
+                        Debug.Log($"Collision resolution: Applied velocity correction - VelA={velA.value}, VelB={velB.value}");
+                    }
                 }
             }
         }

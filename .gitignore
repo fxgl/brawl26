@@ -58,3 +58,5 @@ crashlytics-build.properties
 ehthumbs.db
 Thumbs.db
 mono_crash.*.json
+BrawlServer/bin
+buildwebgl

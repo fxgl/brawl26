@@ -30,14 +30,18 @@ namespace Game.Features {
         public float attackDamage = 10f;
         public float attackCooldown = 0.5f;
         
+        [Header("Attack Settings")]
+        public bool useProjectileAttack = true;
+        public float meleeAttackRange = 2.0f;
+        
         [Header("Debug")]
-        public bool enableLogs = true;
+        public static bool EnableLogs = false;
         
         // Reference to player prefab for view
         public GameObject playerPrefab;
 
         protected override void OnConstruct() {
-            if (enableLogs) Debug.Log("[PlayersFeature] OnConstruct started");
+            if (EnableLogs) Debug.Log("[PlayersFeature] OnConstruct started");
             
             if (this.playerView == null) {
                 Debug.LogError("[PlayersFeature] PlayerView is null! Please assign it in the inspector.");
@@ -45,29 +49,29 @@ namespace Game.Features {
             }
             
             this.playerViewId = this.world.RegisterViewSource(this.playerView);
-            if (enableLogs) Debug.Log($"[PlayersFeature] Registered player view with ID: {this.playerViewId}");
+            if (EnableLogs) Debug.Log($"[PlayersFeature] Registered player view with ID: {this.playerViewId}");
 
             // Add player systems
             this.AddSystem<PlayerSpawnSystem>();
             this.AddSystem<PlayerInputSystem>();
             this.AddSystem<PlayerMovementSystem>();
             this.AddSystem<PlayerAttackSystem>();
-            if (enableLogs) Debug.Log("[PlayersFeature] Added player systems");
+            if (EnableLogs) Debug.Log("[PlayersFeature] Added player systems");
             
             
         }
 
         protected override void OnDeconstruct() {
-            if (enableLogs) Debug.Log("[PlayersFeature] OnDeconstruct called - cleaning up resources");
+            if (EnableLogs) Debug.Log("[PlayersFeature] OnDeconstruct called - cleaning up resources");
             // Clean up resources
         }
         
         // Public API for spawning players
         public Entity SpawnPlayer(int playerId) {
-            if (enableLogs) Debug.Log($"[PlayersFeature] SpawnPlayer called for player ID: {playerId}");
+            if (EnableLogs) Debug.Log($"[PlayersFeature] SpawnPlayer called for player ID: {playerId}");
             
             var entity = this.world.AddEntity();
-            if (enableLogs) Debug.Log($"[PlayersFeature] Created entity: {entity}");
+            if (EnableLogs) Debug.Log($"[PlayersFeature] Created entity: {entity}");
             
             // Add player components
             entity.Set(new PlayerTag());
@@ -76,7 +80,7 @@ namespace Game.Features {
                 Debug.LogError("[PlayersFeature] Invalid playerViewId. Cannot instantiate view!");
             } else {
                 entity.InstantiateView(this.playerViewId);
-                if (enableLogs) Debug.Log($"[PlayersFeature] Instantiated view {playerViewId} for entity: {entity}");
+                if (EnableLogs) Debug.Log($"[PlayersFeature] Instantiated view {playerViewId} for entity: {entity}");
             }
             
             entity.Set(new PlayerIdComponent { id = playerId });
@@ -119,11 +123,20 @@ namespace Game.Features {
                 Debug.LogError("[PlayersFeature] GameState is null! Cannot add player to state.");
             } else {
                 state.players[playerId] = entity;
-                if (enableLogs) Debug.Log($"[PlayersFeature] Added player {playerId} to game state");
+                if (EnableLogs) Debug.Log($"[PlayersFeature] Added player {playerId} to game state");
             }
             
-            if (enableLogs) Debug.Log($"[PlayersFeature] Player {playerId} spawned successfully with entity: {entity}");
+            if (EnableLogs) Debug.Log($"[PlayersFeature] Player {playerId} spawned successfully with entity: {entity}");
             return entity;
         }
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("Game/Debug/Player Feature/Toggle Logs")]
+        public static void ToggleLogs()
+        {
+            EnableLogs = !EnableLogs;
+            Debug.Log($"Player Movement System logs are now {(EnableLogs ? "enabled" : "disabled")}");
+        }
+#endif
     }
+    
 }

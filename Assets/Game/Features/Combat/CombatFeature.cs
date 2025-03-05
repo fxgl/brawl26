@@ -27,6 +27,8 @@ namespace Game.Features {
         // Reference to projectile prefab for view
         public GameObject projectilePrefab;
 
+        private ViewId projectileViewId;
+        
         protected override void OnConstruct() {
             // Add combat systems
             this.AddSystem<ProjectileSystem>();
@@ -34,7 +36,8 @@ namespace Game.Features {
             
             // Register projectile view
             if (projectilePrefab != null) {
-                this.world.RegisterViewSource( this.projectilePrefab);
+                this.projectileViewId = this.world.RegisterViewSource(this.projectilePrefab);
+                Debug.Log($"Registered projectile view with ID: {this.projectileViewId}");
             }
         }
 
@@ -66,6 +69,12 @@ namespace Game.Features {
                 cooldown = 0f,
                 lastAttackTime = 0f
             });
+            
+            // Instantiate projectile view if available
+            if (this.projectileViewId != ViewId.Zero) {
+                entity.InstantiateView(this.projectileViewId);
+                Debug.Log($"Instantiated projectile view {this.projectileViewId} for entity: {entity}");
+            }
             
             return entity;
         }

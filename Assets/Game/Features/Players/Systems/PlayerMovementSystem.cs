@@ -59,6 +59,7 @@ namespace Game.Features.Players.Systems
                 // Get current input and position
                 var input = entity.Read<InputComponent>();
                 var position = entity.Read<PositionComponent>();
+                var rotation = entity.Read<RotationComponent>();
 
                 if (EnableLogs)
                     Debug.Log(
@@ -66,30 +67,81 @@ namespace Game.Features.Players.Systems
 
                 // Calculate new velocity based on input
                 Vector3 moveDirection = new Vector3(input.moveDirection.x, 0f, input.moveDirection.y);
-                Vector3 velocity = moveDirection * this.playersFeature.moveSpeed;
+                if (input.attackPressed)
+                {
+                    
+                        // Get combat feature for projectile attacks
+                        var combatFeature = this.world.GetFeature<CombatFeature>();
+                        if (combatFeature != null)
+                        {
+                            var attackDirection =  rotation.value*Vector3.forward;
+                            // Fire projectile in attack direction
+                            var projectile = combatFeature.SpawnProjectile(
+                                entity, 
+                                position.value + attackDirection, // Spawn in front of player
+                                attackDirection
+                            );
+                            
+                            // Ensure the projectile has collision components
+                            var collisionFeature = this.world.GetFeature<Features.Collision.CollisionFeature>();
+                            if (collisionFeature != null && !projectile.Has<CollisionRadiusComponent>()) {
+                                projectile.Set(new CollisionRadiusComponent { 
+                                    radius = collisionFeature.defaultCollisionRadius 
+                                });
+                                
+                                projectile.Set(new CollisionLayerComponent { 
+                                    layer = collisionFeature.projectileLayer 
+                                });
+                                
+                                // Set up mask to collide with everything except owner's layer
+                                if (entity.Has<CollisionLayerComponent>()) {
+                                    int ownerLayer = entity.Read<CollisionLayerComponent>().layer;
+                                    int mask = ~(1 << ownerLayer);
+                                    projectile.Set(new CollisionMaskComponent { mask = mask });
+                                }
+                            }
+                            
+                            if (EnableLogs) {
+                                string playerId = entity.Has<PlayerIdComponent>() ? 
+                                    entity.Read<PlayerIdComponent>().id.ToString() : 
+                                    entity.id.ToString();
+                                Debug.Log($"Player {playerId} fired projectile from position {position.value}, direction {attackDirection}");
+                            }
+                        }
+                        else if (EnableLogs) {
+                            Debug.LogWarning("Combat feature not found, cannot spawn projectile");
+                        }
+                    
+                }
 
-                if (EnableLogs)
-                    Debug.Log($"Entity {entity.id}: Move direction: {moveDirection}, calculated velocity: {velocity}");
+                 if (moveDirection.sqrMagnitude > float.Epsilon)
+                {
+                    Vector3 velocity = moveDirection * this.playersFeature.moveSpeed;
 
-                // Apply velocity
-                entity.Set(new VelocityComponent { value = velocity });
+                    if (EnableLogs)
+                        Debug.Log(
+                            $"Entity {entity.id}: Move direction: {moveDirection}, calculated velocity: {velocity}");
 
-                // Calculate new position
-                Vector3 newPosition = position.value + velocity * deltaTime;
-                if (EnableLogs)
-                    Debug.Log($"Entity {entity.id}: New position: {newPosition} (delta: {velocity * deltaTime})");
-                entity.Set(new PositionComponent { value = newPosition });
+                    // Apply velocity
+                    entity.Set(new VelocityComponent { value = velocity });
 
-                // Handle rotation (face movement direction)
+                    // Calculate new position
+                    Vector3 newPosition = position.value + velocity * deltaTime;
+                    if (EnableLogs)
+                        Debug.Log($"Entity {entity.id}: New position: {newPosition} (delta: {velocity * deltaTime})");
+                    entity.Set(new PositionComponent { value = newPosition });
 
-                Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
-                if (EnableLogs)
-                    Debug.Log(
-                        $"Entity {entity.id}: Updating rotation to face direction: {moveDirection}, rotation: {targetRotation}");
-                entity.Set(new RotationComponent { value = targetRotation });
+                    // Handle rotation (face movement direction)
 
-                // Draw debug visualization
-                DrawDebugVisualization(position.value, newPosition, moveDirection, entity.id);
+                    Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
+                    if (EnableLogs)
+                        Debug.Log(
+                            $"Entity {entity.id}: Updating rotation to face direction: {moveDirection}, rotation: {targetRotation}");
+                    entity.Set(new RotationComponent { value = targetRotation });
+
+                    // Draw debug visualization
+                    DrawDebugVisualization(position.value, newPosition, moveDirection, entity.id);
+                }
 
                 entity.Remove<InputComponent>();
             }
