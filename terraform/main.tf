@@ -367,10 +367,13 @@ resource "null_resource" "configure_coturn" {
       # Coturn TURN SERVER configuration file
 
       # TURN listener port for UDP and TCP
-      listening-port=3478
+      listening-port=3479
 
       # TURN listener port for TLS
       tls-listening-port=5349
+      
+      cert=/etc/letsencrypt/live/${var.domain_name}/fullchain.pem
+      pkey=/etc/letsencrypt/live/${var.domain_name}/privkey.pem
 
       # Use fingerprint in TURN message
       fingerprint
@@ -391,21 +394,22 @@ resource "null_resource" "configure_coturn" {
       # Replace with your server's actual IP address if known
       # or use external-ip option below to auto-detect
       relay-ip=0.0.0.0
+      listening-ip=134.122.53.93
 
       # Auto-detect external IP via STUN
-      external-ip=
+      external-ip=134.122.53.93
 
       # Set the log file
-      log-file=/var/log/turnserver.log
+      log-file=/var/log/turn/server.log
 
       # Enable verbose logging
       verbose
 
-      # Use systemd for logging (alternatively)
-      # syslog
+      # Use systemd for logging
+      syslog
 
       # Don't let the server allow loopback IPs in peers' requests
-      no-loopback-peers
+      no-loopback-peers=1
 
       # Don't let the server to connect to peers on loopback IPs
       no-multicast-peers
@@ -418,6 +422,11 @@ resource "null_resource" "configure_coturn" {
 
   provisioner "remote-exec" {
     inline = [
+      # Create log directory and set permissions
+      "mkdir -p /var/log",
+      "touch /var/log/turnserver.log",
+      "chown turnserver:turnserver /var/log/turnserver.log",
+      "chmod 644 /var/log/turnserver.log",
       "systemctl restart coturn"
     ]
   }

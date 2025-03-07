@@ -216,23 +216,23 @@
                 config: {
                     iceServers: [
                         {
-                            urls: 'stun:gpbrawl.duckdns.org:3478'
+                            urls: 'stun:brawl.positrondynamics.tech:3478'
                         },
                         {
-                            urls: 'turn:gpbrawl.duckdns.org:3478',
-                            username: 'user',
-                            credential: 'webrtcpassword3K'
+                            urls: 'turn:brawl.positrondynamics.tech:3479',
+                            username: 'webrtcuser',
+                            credential: 'webrtcpassword'
                         },
                         {
-                            urls: 'turns:gpbrawl.duckdns.org:5349',
-                            username: 'user',
-                            credential: 'webrtcpassword3K'
+                            urls: 'turns:brawl.positrondynamics.tech:5349',
+                            username: 'webrtcuser',
+                            credential: 'webrtcpassword'
                         }
                     ],
                     iceTransportPolicy: 'all',
                 },
                 port: 443, secure: true,
-                host: 'gpbrawl.duckdns.org',
+                host: 'brawl.positrondynamics.tech',
                 path: '/peerjs/', key: 'fxbrawl',
             });
 
@@ -309,6 +309,7 @@
                 y: normalizedY
             });
         });
+        ping = 0;
 
         // Handle received data
         conn.on("data", (data) => {
@@ -317,9 +318,11 @@
                     // Move the rectangle based on received cursor position
                     const x = data.x * window.innerWidth;
                     const y = data.y * window.innerHeight;
-                    if(data.copy<2)
+                    if(data.copy==2)
                     {
-                        connectionStatus.innerHTML = `ping ${Date.now()-data.start}`;
+                        ping += Date.now()-data.start
+                        ping *= 0.5
+                        connectionStatus.innerHTML = `ping ${Math.round(ping)}`;
                     }
                     
                     const rect = rects[data.copy];
@@ -327,11 +330,6 @@
                         rect.style.left = `${x - 10}px`; // Center the rectangle on cursor
                         rect.style.top = `${y - 10}px`;
 
-                        // Add a small visual effect to show movement
-                        rect.style.transform = 'scale(1.2)';
-                        setTimeout(() => {
-                            rect.style.transform = 'scale(1)';
-                        }, 100);
                         if (data.copy < 9) {
                             // Send copy command
                             data.copy += 1;
