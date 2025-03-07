@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Game.Modules {
     
     using TState = GameState;
@@ -27,7 +29,13 @@ namespace Game.Modules {
             
         }
 
-        protected override void OnInitialize() {
+        protected override void OnInitialize()
+        {
+
+            // GameObject.FindObjectsOfType<UnityNetcode>();
+            // UnityNetcode.QuerySupport( (supportStatus) =>
+            // {
+            // } );
 
             // TODO: Set your transport layer and serializer
             // var instance = (ME.ECS.Network.INetworkModuleBase)this;

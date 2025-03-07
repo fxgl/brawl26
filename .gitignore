@@ -60,3 +60,5 @@ Thumbs.db
 mono_crash.*.json
 BrawlServer/bin
 buildwebgl
+terraform/.terraform
+terraform/deploy

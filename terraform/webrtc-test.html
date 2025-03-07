@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>WebRTC Connection Test</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                line-height: 1.6;
+            }
+            h1,
+            h2 {
+                color: #2c3e50;
+            }
+            .container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-top: 20px;
+            }
+            .video-container {
+                background-color: #f5f5f5;
+                border-radius: 5px;
+                padding: 10px;
+            }
+            video {
+                width: 100%;
+                border: 1px solid #ddd;
+                background-color: #000;
+            }
+            button {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin: 5px 0;
+            }
+            button:hover {
+                background-color: #2980b9;
+            }
+            pre {
+                background-color: #f5f5f5;
+                padding: 10px;
+                border-radius: 5px;
+                overflow-x: auto;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            .status {
+                padding: 8px;
+                border-radius: 4px;
+                margin-bottom: 10px;
+            }
+            .success {
+                background-color: #d4edda;
+                color: #155724;
+            }
+            .error {
+                background-color: #f8d7da;
+                color: #721c24;
+            }
+            .info {
+                background-color: #d1ecf1;
+                color: #0c5460;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>WebRTC Connection Test</h1>
+        <p>
+            This page tests your WebRTC infrastructure including TURN server
+            connectivity.
+        </p>
+
+        <div id="connectionStatus" class="status info">
+            Not connected. Click "Start Test" to begin.
+        </div>
+
+        <button id="startTest">Start Test</button>
+        <button id="stopTest" disabled>Stop Test</button>
+
+        <div class="container">
+            <div class="video-container">
+                <h2>Local Video</h2>
+                <video id="localVideo" autoplay muted playsinline></video>
+            </div>
+            <div class="video-container">
+                <h2>Remote Video</h2>
+                <video id="remoteVideo" autoplay playsinline></video>
+            </div>
+        </div>
+
+        <h2>Test Results</h2>
+        <div id="results">
+            <p>TURN Server: <span id="turnStatus">Not tested</span></p>
+            <p>PeerJS Connection: <span id="peerStatus">Not tested</span></p>
+            <p>ICE Connection: <span id="iceStatus">Not tested</span></p>
+        </div>
+
+        <h2>Connection Log</h2>
+        <pre id="logOutput"></pre>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+        <script>
+            // Configuration
+            const turnConfig = {
+                iceServers: [
+                    {
+                        urls: "stun:gpbrawl.duckdns.org:3478",
+                    },
+                    {
+                        urls: "turn:gpbrawl.duckdns.org:3478",
+                        username: "user",
+                        credential: "webrtcpassword3K",
+                    },
+                ],
+            };
+
+            // DOM elements
+            const startTestBtn = document.getElementById("startTest");
+            const stopTestBtn = document.getElementById("stopTest");
+            const localVideo = document.getElementById("localVideo");
+            const remoteVideo = document.getElementById("remoteVideo");
+            const connectionStatus =
+                document.getElementById("connectionStatus");
+            const turnStatus = document.getElementById("turnStatus");
+            const peerStatus = document.getElementById("peerStatus");
+            const iceStatus = document.getElementById("iceStatus");
+            const logOutput = document.getElementById("logOutput");
+
+            // Variables
+            let localStream;
+            let peer1, peer2;
+            let mediaConnection;
+
+            // Logging function
+            function log(message) {
+                const timestamp = new Date().toISOString().substring(11, 19);
+                logOutput.textContent =
+                    `[${timestamp}] ${message}\n` + logOutput.textContent;
+                console.log(message);
+            }
+
+            // Set status
+            function setStatus(element, status, isSuccess) {
+                element.textContent = status;
+                element.className = isSuccess ? "success" : "error";
+            }
+
+            // Set connection status
+            function setConnectionStatus(message, isSuccess = null) {
+                connectionStatus.textContent = message;
+                if (isSuccess === true) {
+                    connectionStatus.className = "status success";
+                } else if (isSuccess === false) {
+                    connectionStatus.className = "status error";
+                } else {
+                    connectionStatus.className = "status info";
+                }
+            }
+
+            // Start test
+            async function startTest() {
+                try {
+                    setConnectionStatus("Starting test...");
+                    startTestBtn.disabled = true;
+                    stopTestBtn.disabled = false;
+
+                    // Reset status
+                    turnStatus.textContent = "Testing...";
+                    peerStatus.textContent = "Testing...";
+                    iceStatus.textContent = "Testing...";
+
+                    // Get user media
+                    log("Requesting camera and microphone access");
+                    localStream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: true,
+                    });
+                    localVideo.srcObject = localStream;
+                    log("Got local media stream");
+
+                    // Create Peer 1 (local)
+                    log("Creating first PeerJS instance");
+                    peer1 = new Peer(`local-${Date.now()}`, {
+                        host: "gpbrawl.duckdns.org",
+                        path: "/peerjs",
+                        secure: true,
+                        port: 443,
+                        config: turnConfig,
+                    });
+
+                    peer1.on("open", (id) => {
+                        log(`Peer 1 connected with ID: ${id}`);
+                        setStatus(peerStatus, "Connected", true);
+
+                        // Create Peer 2 (remote)
+                        log("Creating second PeerJS instance");
+                        peer2 = new Peer(`remote-${Date.now()}`, {
+                            host: "gpbrawl.duckdns.org",
+                            path: "/peerjs",
+                            secure: true,
+                            port: 443,
+                            config: turnConfig,
+                        });
+
+                        peer2.on("open", (id) => {
+                            log(`Peer 2 connected with ID: ${id}`);
+
+                            // Set up call receiver
+                            peer2.on("call", (call) => {
+                                log("Peer 2 received call");
+                                mediaConnection = call;
+
+                                call.answer(localStream);
+                                call.on("stream", (remoteStream) => {
+                                    log("Peer 2 received stream");
+                                    remoteVideo.srcObject = remoteStream;
+                                    setConnectionStatus(
+                                        "Connection established successfully!",
+                                        true,
+                                    );
+                                    setStatus(iceStatus, "Connected", true);
+
+                                    // Check if TURN is being used
+                                    checkTurnServerUsage(call.peerConnection);
+                                });
+                            });
+
+                            // Make the call
+                            log("Peer 1 initiating call to Peer 2");
+                            const call = peer1.call(peer2.id, localStream);
+
+                            call.on("stream", (remoteStream) => {
+                                log("Peer 1 received stream");
+                            });
+
+                            call.on("error", (err) => {
+                                log(`Call error: ${err}`);
+                                setConnectionStatus("Call failed", false);
+                            });
+                        });
+
+                        peer2.on("error", (err) => {
+                            log(`Peer 2 error: ${err}`);
+                            setStatus(peerStatus, "Failed", false);
+                            setConnectionStatus(
+                                "PeerJS connection failed",
+                                false,
+                            );
+                        });
+                    });
+
+                    peer1.on("error", (err) => {
+                        log(`Peer 1 error: ${err}`);
+                        setStatus(peerStatus, "Failed", false);
+                        setConnectionStatus("PeerJS connection failed", false);
+                    });
+                } catch (error) {
+                    log(`Error: ${error.message}`);
+                    setConnectionStatus("Test failed", false);
+                    stopTest();
+                }
+            }
+
+            // Check if TURN server is being used
+            function checkTurnServerUsage(peerConnection) {
+                if (!peerConnection) return;
+
+                log("Checking ICE candidates");
+
+                // Add event listener for ICE candidate
+                peerConnection.addEventListener("icecandidate", (event) => {
+                    if (event.candidate) {
+                        log(`ICE candidate: ${event.candidate.candidate}`);
+
+                        if (
+                            event.candidate.candidate.indexOf("typ relay") !==
+                            -1
+                        ) {
+                            log("TURN server is being used");
+                            setStatus(
+                                turnStatus,
+                                "Active (TURN relay in use)",
+                                true,
+                            );
+                        } else if (
+                            event.candidate.candidate.indexOf("typ srflx") !==
+                            -1
+                        ) {
+                            log("STUN server is being used");
+                            setStatus(
+                                turnStatus,
+                                "STUN only (no TURN relay)",
+                                false,
+                            );
+                        }
+                    }
+                });
+
+                // Check current connections
+                const stats = peerConnection.getStats();
+                stats.then((statsReport) => {
+                    statsReport.forEach((report) => {
+                        if (
+                            report.type === "candidate-pair" &&
+                            report.state === "succeeded"
+                        ) {
+                            log(
+                                `Active ICE candidate pair: ${JSON.stringify(report)}`,
+                            );
+                        }
+                    });
+                });
+            }
+
+            // Stop test
+            function stopTest() {
+                log("Stopping test");
+
+                // Stop media tracks
+                if (localStream) {
+                    localStream.getTracks().forEach((track) => track.stop());
+                    localVideo.srcObject = null;
+                    remoteVideo.srcObject = null;
+                }
+
+                // Close PeerJS connections
+                if (peer1) peer1.destroy();
+                if (peer2) peer2.destroy();
+
+                startTestBtn.disabled = false;
+                stopTestBtn.disabled = true;
+            }
+
+            // Event listeners
+            startTestBtn.addEventListener("click", startTest);
+            stopTestBtn.addEventListener("click", stopTest);
+        </script>
+    </body>
+</html>

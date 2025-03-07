@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Unity WebGL Player | {{{ PRODUCT_NAME }}}</title>
+  <link rel="shortcut icon" href="TemplateData/favicon.ico">
+  <link rel="stylesheet" href="TemplateData/style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <script src="peerjs.min.js"></script>
+
+</head>
+<body>
+<div id="unity-container">
+  <canvas id="unity-canvas" width={{{ WIDTH }}} height={{{ HEIGHT }}} tabindex="-1"></canvas>
+  <div id="unity-loading-bar">
+    <div id="unity-logo"></div>
+    <div id="unity-progress-bar-empty">
+      <div id="unity-progress-bar-full"></div>
+    </div>
+  </div>
+  <div id="unity-warning"> </div>
+</div>
+<script>
+  // Export functions for Unity to access
+  var unityInstance;
+
+  // PeerJS variables
+  var peer;
+  var pendingPeerId = null;
+  var peerInitialized = false;
+
+  // These functions need to be exported so Unity WebGL can find them
+  function connectToPeer(peerId, data) {
+    if (typeof window.connectToPeer === 'function') {
+      return window.connectToPeer(peerId, data);
+    }
+  }
+
+  function sendData(peerId, dataType, dataContent) {
+    if (typeof window.sendData === 'function') {
+      return window.sendData(peerId, dataType, dataContent);
+    }
+    return false;
+  }
+
+  function broadcastData(dataType, dataContent) {
+    if (typeof window.broadcastData === 'function') {
+      return window.broadcastData(dataType, dataContent);
+    }
+    return false;
+  }
+
+  function getConnectedPeers() {
+    if (typeof window.getConnectedPeers === 'function') {
+      return window.getConnectedPeers();
+    }
+    return "[]";
+  }
+
+  function disconnectFromSpecificPeer(peerId) {
+    if (typeof window.disconnectFromSpecificPeer === 'function') {
+      window.disconnectFromSpecificPeer(peerId);
+    }
+  }
+
+  function disconnectFromAllPeers() {
+    if (typeof window.disconnectFromAllPeers === 'function') {
+      window.disconnectFromAllPeers();
+    }
+  }
+
+  // Make them globally available
+  window.connectToPeer = connectToPeer;
+  window.sendData = sendData;
+  window.broadcastData = broadcastData;
+  window.getConnectedPeers = getConnectedPeers;
+  window.disconnectFromSpecificPeer = disconnectFromSpecificPeer;
+  window.disconnectFromAllPeers = disconnectFromAllPeers;
+  window.addEventListener("load", function () {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("ServiceWorker.js");
+    }
+  });
+
+  var container = document.querySelector("#unity-container");
+  var canvas = document.querySelector("#unity-canvas");
+  var loadingBar = document.querySelector("#unity-loading-bar");
+  var progressBarFull = document.querySelector("#unity-progress-bar-full");
+  var warningBanner = document.querySelector("#unity-warning");
+
+  // Global variable to store the peer ID if we get it before Unity is ready
+  var pendingPeerId = null;
+
+  // Initialize PeerJS when page loads
+  function initializePeerJS() {
+    // Check if PeerJS is available
+    if (typeof Peer === 'undefined') {
+      console.error('PeerJS library not loaded. Cannot initialize.');
+
+      // Show error banner
+      unityShowBanner('PeerJS library could not be loaded. Peer-to-peer functionality will not work.', 'error');
+      return;
+    }
+
+    if (peerInitialized) {
+      console.log('PeerJS already initialized, destroying previous instance.');
+      if (peer) {
+        peer.destroy();
+      }
+    }
+
+    console.log('Initializing PeerJS...');
+    peerInitialized = true;
+
+    // Create a new Peer with random ID and custom ICE server configuration
+    const iceConfig = {
+      "iceServers": [
+        {
+          "urls": "stun:gpbrawl.duckdns.org:3478"
+        },
+        {
+          "urls": "turn:gpbrawl.duckdns.org:3478",
+          "username": "user",
+          "credential": "webrtcpassword3K"
+        },
+        {
+          "urls": "turns:gpbrawl.duckdns.org:5349",
+          "username": "user",
+          "credential": "webrtcpassword3K"
+        }
+      ],
+      "iceTransportPolicy": "all"
+    };
+
+    try {
+      peer = new Peer({
+        config: iceConfig,
+        debug: 2, // 0 = no logs, 1 = errors only, 2 = warnings + errors, 3 = all logs
+        secure: true,
+        pingInterval: 3000, // Ping interval in ms (default is 5000)
+        retryTimers: [0, 1000, 3000, 5000] // Retry timers in ms (new in 1.5.x)
+      });
+    } catch (err) {
+      console.error('Error creating Peer instance:', err);
+      unityShowBanner('Failed to initialize PeerJS: ' + err.message, 'error');
+      peerInitialized = false;
+      return;
+    }
+
+    peer.on('open', function(id) {
+      console.log('PeerJS connection established with ID: ' + id);
+
+      // Store the ID in case Unity isn't ready yet
+      pendingPeerId = id;
+
+      // If Unity is loaded, send the ID to Unity
+      if (unityInstance) {
+        sendPeerIdToUnity(id);
+      } else {
+        console.log('Unity not yet loaded, stored peer ID for later');
+      }
+    });
+
+    // Function to send the peer ID to Unity once it's ready
+    window.sendPeerIdToUnity = function(id) {
+      if (!unityInstance) {
+        console.warn('Unity instance not ready yet, cannot send peer ID');
+        return false;
+      }
+
+      // Try to find the PeerJSTest GameObject
+      try {
+        unityInstance.SendMessage('PeerJSTest', 'SetPeerId', id);
+        console.log('Successfully sent peer ID to PeerJSTest: ' + id);
+        return true;
+      } catch (e) {
+        // Try PeerJSManager as fallback
+        try {
+          unityInstance.SendMessage('PeerJSManager', 'SetPeerId', id);
+          console.log('Successfully sent peer ID to PeerJSManager: ' + id);
+          return true;
+        } catch (err) {
+          console.error('Failed to send peer ID to Unity: ' + err);
+          return false;
+        }
+      }
+    };
+
+    peer.on('connection', function(conn) {
+      console.log('Incoming connection from: ' + conn.peer);
+
+      // Store connections to manage them better
+      const connections = window.peerConnections || {};
+      window.peerConnections = connections;
+      connections[conn.peer] = conn;
+
+      // Notify Unity about new connection
+      if (unityInstance) {
+        unityInstance.SendMessage('PeerJSManager', 'OnPeerConnected', conn.peer);
+      }
+
+      conn.on('open', function() {
+        console.log('Connection opened with: ' + conn.peer);
+      });
+
+      conn.on('data', function(data) {
+        console.log('Received data: ', data);
+        // Forward data to Unity
+        if (unityInstance) {
+          unityInstance.SendMessage('PeerJSManager', 'OnDataReceived', JSON.stringify({
+            peerId: conn.peer,
+            data: data
+          }));
+        }
+      });
+
+      conn.on('close', function() {
+        console.log('Connection closed with: ' + conn.peer);
+        delete connections[conn.peer];
+        if (unityInstance) {
+          unityInstance.SendMessage('PeerJSManager', 'OnPeerDisconnected', conn.peer);
+        }
+      });
+    });
+
+    peer.on('error', function(err) {
+      console.error('PeerJS error: ', err);
+      if (unityInstance) {
+        unityInstance.SendMessage('PeerJSManager', 'OnPeerError', err.type);
+      }
+    });
+
+    // Create a global function that Unity can call
+    // Store all connections
+    window.peerConnections = {};
+
+    // Connect to a peer and optionally send initial data
+    window.connectToPeer = function(peerId, data) {
+      // Check if connection already exists
+      if (window.peerConnections && window.peerConnections[peerId]) {
+        console.log('Already connected to: ' + peerId);
+        if (data) {
+          window.peerConnections[peerId].send(data);
+        }
+        return;
+      }
+
+      // Connection options with metadata
+      const options = {
+        reliable: true,
+        serialization: 'json',
+        metadata: { source: 'Unity WebGL' }
+      };
+
+      var conn = peer.connect(peerId, options);
+
+      // Store the connection
+      if (!window.peerConnections) window.peerConnections = {};
+      window.peerConnections[peerId] = conn;
+
+      // For room connection test - parse the join message if this is a room join
+      try {
+        if (data && typeof data === 'object' && data.action === 'join') {
+          console.log('Peer ' + peerId + ' is joining room: ' + data.room);
+        } else if (data && typeof data === 'string' && data.includes('"action":"join"')) {
+          // Try to parse string JSON
+          const joinData = JSON.parse(data);
+          if (joinData.action === 'join') {
+            console.log('Peer ' + peerId + ' is joining room: ' + joinData.room);
+          }
+        }
+      } catch (e) {
+        console.log('Not a room join message');
+      }
+
+      conn.on('open', function() {
+        console.log('Connection established with: ' + peerId);
+        if (unityInstance) {
+          unityInstance.SendMessage('PeerJSManager', 'OnPeerConnected', peerId);
+        }
+        if (data) {
+          conn.send(data);
+          console.log('Sent initial data to peer: ' + peerId);
+        }
+      });
+
+      conn.on('data', function(receivedData) {
+        console.log('Received data: ', receivedData);
+        if (unityInstance) {
+          unityInstance.SendMessage('PeerJSManager', 'OnDataReceived', JSON.stringify({
+            peerId: conn.peer,
+            data: receivedData
+          }));
+        }
+      });
+
+      conn.on('error', function(err) {
+        console.error('Connection error: ', err);
+        if (unityInstance) {
+          unityInstance.SendMessage('PeerJSManager', 'OnConnectionError', peerId);
+        }
+      });
+
+      conn.on('close', function() {
+        console.log('Connection closed with: ' + peerId);
+        delete window.peerConnections[peerId];
+        if (unityInstance) {
+          unityInstance.SendMessage('PeerJSManager', 'OnPeerDisconnected', peerId);
+        }
+      });
+    };
+
+    // Send data to a peer (creates connection if it doesn't exist)
+    window.sendDataToPeer = function(peerId, data) {
+      if (window.peerConnections && window.peerConnections[peerId]) {
+        window.peerConnections[peerId].send(data);
+        console.log('Sent data to existing peer connection: ' + peerId);
+        return;
+      }
+
+      // If no existing connection, create one
+      window.connectToPeer(peerId, data);
+    };
+
+    // Send data to a specific peer with data types (for Unity integration)
+    window.sendData = function(peerId, dataType, dataContent) {
+      const dataPacket = {
+        type: dataType,
+        content: dataContent,
+        timestamp: Date.now()
+      };
+
+      if (window.peerConnections && window.peerConnections[peerId]) {
+        window.peerConnections[peerId].send(dataPacket);
+        console.log('Sent typed data to peer: ' + peerId + ', type: ' + dataType);
+        return true;
+      } else {
+        // No existing connection
+        console.warn('No active connection to peer: ' + peerId + ', attempting to connect');
+        try {
+          window.connectToPeer(peerId, dataPacket);
+          return true;
+        } catch (err) {
+          console.error('Failed to establish connection to send data', err);
+          if (unityInstance) {
+            unityInstance.SendMessage('PeerJSManager', 'OnSendDataFailed', JSON.stringify({
+              peerId: peerId,
+              error: err.message || "Connection failed"
+            }));
+          }
+          return false;
+        }
+      }
+    };
+
+    // Broadcast data to all connected peers
+    window.broadcastData = function(dataType, dataContent) {
+      const dataPacket = {
+        type: dataType,
+        content: dataContent,
+        timestamp: Date.now(),
+        broadcast: true
+      };
+
+      if (!window.peerConnections || Object.keys(window.peerConnections).length === 0) {
+        console.warn('No peers connected to broadcast data');
+        if (unityInstance) {
+          unityInstance.SendMessage('PeerJSManager', 'OnBroadcastResult', JSON.stringify({
+            success: false,
+            peersCount: 0,
+            error: "No peers connected"
+          }));
+        }
+        return false;
+      }
+
+      let successCount = 0;
+      const peerIds = Object.keys(window.peerConnections);
+
+      peerIds.forEach(function(peerId) {
+        try {
+          window.peerConnections[peerId].send(dataPacket);
+          successCount++;
+        } catch (err) {
+          console.error('Failed to send broadcast to peer: ' + peerId, err);
+        }
+      });
+
+      console.log('Broadcast sent to ' + successCount + ' of ' + peerIds.length + ' peers');
+
+      if (unityInstance) {
+        unityInstance.SendMessage('PeerJSManager', 'OnBroadcastResult', JSON.stringify({
+          success: successCount > 0,
+          peersCount: peerIds.length,
+          successCount: successCount
+        }));
+      }
+
+      return successCount > 0;
+    };
+
+    // Disconnect from a specific peer
+    window.disconnectFromSpecificPeer = function(peerId) {
+      if (window.peerConnections && window.peerConnections[peerId]) {
+        window.peerConnections[peerId].close();
+        delete window.peerConnections[peerId];
+        console.log('Disconnected from peer: ' + peerId);
+      }
+    };
+
+    // Disconnect from all peers and reinitialize
+    window.disconnectFromAllPeers = function() {
+      if (window.peerConnections) {
+        Object.keys(window.peerConnections).forEach(function(peerId) {
+          window.peerConnections[peerId].close();
+        });
+        window.peerConnections = {};
+      }
+
+      if (peer) {
+        peer.destroy();
+        console.log('Disconnected from all peers and destroyed PeerJS instance');
+        // Reinitialize after a short delay
+        setTimeout(initializePeerJS, 500);
+      }
+    };
+
+    // Get the list of connected peer IDs
+    window.getConnectedPeers = function() {
+      if (window.peerConnections) {
+        var peerIds = Object.keys(window.peerConnections);
+        var peersJson = JSON.stringify(peerIds);
+
+        if (unityInstance) {
+          unityInstance.SendMessage('PeerJSManager', 'OnGetConnectedPeers', peersJson);
+        }
+        return peersJson;
+      }
+      return JSON.stringify([]);
+    };
+  }
+
+  // Shows a temporary message banner/ribbon for a few seconds, or
+  // a permanent error message on top of the canvas if type=='error'.
+  // If type=='warning', a yellow highlight color is used.
+  // Modify or remove this function to customize the visually presented
+  // way that non-critical warnings and error messages are presented to the
+  // user.
+  function unityShowBanner(msg, type) {
+    function updateBannerVisibility() {
+      warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+    }
+    var div = document.createElement('div');
+    div.innerHTML = msg;
+    warningBanner.appendChild(div);
+    if (type == 'error') div.style = 'background: red; padding: 10px;';
+    else {
+      if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+      setTimeout(function() {
+        warningBanner.removeChild(div);
+        updateBannerVisibility();
+      }, 5000);
+    }
+    updateBannerVisibility();
+  }
+
+  var buildUrl = "Build";
+  var loaderUrl = buildUrl + "/{{{ LOADER_FILENAME }}}";
+  var config = {
+    dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+    frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+    #if USE_THREADS
+    workerUrl: buildUrl + "/{{{ WORKER_FILENAME }}}",
+    #endif
+    #if USE_WASM
+    codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+    #endif
+    #if MEMORY_FILENAME
+    memoryUrl: buildUrl + "/{{{ MEMORY_FILENAME }}}",
+    #endif
+    #if SYMBOLS_FILENAME
+    symbolsUrl: buildUrl + "/{{{ SYMBOLS_FILENAME }}}",
+    #endif
+    streamingAssetsUrl: "StreamingAssets",
+    companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+  productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+  productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+  showBanner: unityShowBanner,
+  };
+
+  // By default Unity keeps WebGL canvas render target size matched with
+  // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+  // Set this to false if you want to decouple this synchronization from
+  // happening inside the engine, and you would instead like to size up
+  // the canvas DOM size and WebGL render target sizes yourself.
+  // config.matchWebGLToCanvasSize = false;
+
+  if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    // Mobile device style: fill the whole browser client area with the game canvas:
+    var meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+    document.getElementsByTagName('head')[0].appendChild(meta);
+  }
+
+  #if BACKGROUND_FILENAME
+  canvas.style.background = "url('" + buildUrl + "/{{{ BACKGROUND_FILENAME.replace(/'/g, '%27') }}}') center / cover";
+  #endif
+  loadingBar.style.display = "block";
+
+  var script = document.createElement("script");
+  script.src = loaderUrl;
+  script.onload = () => {
+    createUnityInstance(canvas, config, (progress) => {
+      progressBarFull.style.width = 100 * progress + "%";
+    }).then((instance) => {
+      unityInstance = instance;
+      loadingBar.style.display = "none";
+
+      // Initialize PeerJS after Unity is loaded
+      // Adding a small delay to ensure everything is ready
+      setTimeout(function() {
+        console.log("Unity loaded, initializing PeerJS...");
+
+        // Initialize PeerJS if it hasn't been initialized yet
+        if (!peerInitialized) {
+          initializePeerJS();
+        }
+        // If we already have a peer ID but Unity wasn't ready before, send it now
+        else if (pendingPeerId) {
+          console.log("Unity now ready, sending pending peer ID: " + pendingPeerId);
+          sendPeerIdToUnity(pendingPeerId);
+        }
+      }, 1000);
+    }).catch((message) => {
+      alert(message);
+    });
+  };
+  document.body.appendChild(script);
+</script>
+</body>
+</html>
