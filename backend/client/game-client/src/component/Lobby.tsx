@@ -1,17 +1,9 @@
-import { useState } from 'react';
-import {
-    Container,
-    Title,
-    Button,
-    TextInput,
-    Group,
-    Paper,
-    Stack,
-    Text,
-    Divider,
-    Box
-} from '@mantine/core';
-import { createStyles, } from '@mantine/emotion';
+import {useState} from 'react';
+import {Box, Button, Container, Divider, Group, Loader, Paper, Stack, Text, TextInput, Title} from '@mantine/core';
+import {createStyles,} from '@mantine/emotion';
+import { useAppStore} from "../store/appStore.ts";
+import {ConnectionStatusEnum} from "../../../../shared/datapacket.ts";
+
 
 // Create styles for the background image
 // Create styles for the background image
@@ -36,25 +28,33 @@ const useStyles = createStyles(() => ({
         overflow: 'auto'
     }
 }));
+
 export function Lobby() {
-    const { classes } = useStyles();
+    const {classes} = useStyles();
     const [matchCode, setMatchCode] = useState('');
 
     const handleQuickPlay = () => {
-        // TODO: Implement quick play functionality
-        console.log('Quick play clicked');
+        lookForServer();
     };
+
+    const  handleStopLookForServer = () => {
+        stopLookForServer();
+    };
+
 
     const handleJoinMatch = () => {
         // TODO: Implement join match with code functionality
         console.log('Joining match with code:', matchCode);
     };
+    const lookForServer = useAppStore.getState().lookForServer;
+    const stopLookForServer = useAppStore.getState().stopLookForServer;
+    const connectionStatus = useAppStore(state => state.connectionStatus);
 
     return (
         <div className={classes.backgroundContainer}>
             <Container size="sm" py="xl">
                 <Paper shadow="md" p="xl" radius="md">
-                    <Stack >
+                    <Stack>
                         <Title order={1} mb="md">TANK BROS</Title>
 
                         <Box>
@@ -62,21 +62,31 @@ export function Lobby() {
                             <Text color="dimmed" size="sm" mb="md">
                                 Join a random match with other players
                             </Text>
-                            <Button
-                                fullWidth
-                                size="lg"
-                                color="green"
-                                onClick={handleQuickPlay}
-                            >
-                                Quick Play
-                            </Button>
+                            {connectionStatus !== ConnectionStatusEnum.lookingForMatch ? <Button
+                                    fullWidth
+                                    size="lg"
+                                    color="green"
+                                    onClick={handleQuickPlay}
+                                    disabled={connectionStatus !== ConnectionStatusEnum.connected}
+                                >
+                                    Quick Play
+                                </Button> :
+                                <Button
+                                    fullWidth
+                                    size="lg"
+                                    color="red"
+                                    onClick={handleStopLookForServer}
+                                    leftSection={<Loader type={'dots'} />}
+                                >
+                                    Looking for match...
+                                </Button>}
                         </Box>
 
-                        <Divider label="OR" labelPosition="center" />
+                        <Divider label="OR" labelPosition="center"/>
 
                         <Box>
-                            <Text size="lg" w={500} mb="xs">Join with Code</Text>
-                            <Text color="dimmed" size="sm" mb="md">
+                            <Text size="lg" mb="xs">Join with Code</Text>
+                            <Text c="dimmed" size="sm" mb="md">
                                 Enter a match code to join a specific game
                             </Text>
                             <Group grow>

@@ -1,16 +1,14 @@
 import Peer, { DataConnection } from 'peerjs';
+import {DataPacket, DataPacketWrapper, MessageType} from "../../../../shared/datapacket.ts";
 
-export interface DataPacket {
-  type: string;
-  payload: string;
-  timestamp?: number;
-  senderId?: string;
-}
+
+
 interface PeerServiceEvents {
   onConnection: (conn: DataConnection) => void;
   onDisconnection: (peerId: string) => void;
   onData: (peerId: string, data: DataPacket) => void;
   onError: (error: Error) => void;
+  onServerData: (data: DataPacket) => void;
 }
 
 
@@ -40,15 +38,12 @@ class PeerService {
 
   private isDataPacket(data: unknown): data is DataPacket {
     return (
-        data !== null &&
         typeof data === 'object' &&
+        data !== null &&
         'type' in data &&
-        'payload' in data &&
-        typeof data.type === 'string' &&
-        typeof data.payload === 'string'
+        Object.values(MessageType).includes((data as DataPacket).type)
     );
   }
-
   /**
    * Initialize a new Peer connection
    * @param id Optional custom peer ID
@@ -60,6 +55,15 @@ class PeerService {
         console.log('Initializing peer with ID:', id);
         this.peer = new Peer(id, options);
         console.log(`peer created ${this.peer.id}`);
+
+        this.peer.socket.on('message',(message: DataPacketWrapper)=>{
+          if(message.type ===MessageType.DATA) {
+            console.log(`Received message from server: ${JSON.stringify(message.packet)}`);
+            if(this.events.onServerData) {
+              this.events.onServerData(message.packet);
+            }
+          }
+        });
 
         this.peer.on('open', (id) => {
           console.log('My peer ID is:', id);
@@ -83,6 +87,19 @@ class PeerService {
         reject(error);
       }
     });
+  }
+
+  sendServer(data: DataPacket): Promise<void> {
+    return new Promise((resolve, reject) => {
+
+      if (!this.peer) {
+        reject(new Error('Peer not initialized'));
+        return;
+      }
+      const packet:DataPacketWrapper ={type: MessageType.DATA, packet: data};
+      this.peer.socket.send(packet);
+      resolve();
+    })
   }
 
   /**
@@ -116,6 +133,20 @@ class PeerService {
         reject(error);
       }
     });
+  }
+  /**
+   * Add an event handler for data events
+   * @param handler The handler function to add
+   */
+  addDataHandler(handler: (peerId: string, data: DataPacket) => void): void {
+    this.events.onData = handler;
+  }
+
+  /**
+   * Remove the data event handler
+   */
+  removeDataHandler(): void {
+    this.events.onData = undefined;
   }
 
   /**

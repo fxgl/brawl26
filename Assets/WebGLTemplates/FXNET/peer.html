@@ -231,9 +231,14 @@
                     ],
                     iceTransportPolicy: 'all',
                 },
-                port: 443, secure: true,
-                host: 'brawl.positrondynamics.tech',
+                port: 9001 ,
+                host: 'localhost',
                 path: '/peerjs/', key: 'fxbrawl',
+            });
+            
+            peer.socket.on('message',(message)=>{
+                if(message.type === 'data')
+                log(`Received message from server: ${JSON.stringify(message.packet)}`);
             });
 
             if (!server) {

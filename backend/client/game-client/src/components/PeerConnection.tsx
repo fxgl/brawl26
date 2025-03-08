@@ -1,206 +1,150 @@
-import {useState, useEffect, useCallback} from 'react';
-import { usePeer } from '../hooks/usePeer';
-import { Button, TextInput, Group, Stack, Text, Paper, Badge } from '@mantine/core';
-import { DataPacket } from "../utils/peerService.ts";
-import { useUserProfileStore } from "../store/userProfileStore.ts";
-
-// Define a type for the message data
-type MessageData = string | Record<string, unknown>;
+import {useCallback, useEffect} from 'react';
+import {usePeer} from '../hooks/usePeer';
+import {useUserProfileStore} from "../store/userProfileStore.ts";
+import {useAppStore} from "../store/appStore.ts";
+import { DataPacket, DataPacketChatMessage, MessageType} from "../../../../shared/datapacket.ts";
+import { notifications } from '@mantine/notifications';
+import {DataConnection} from "peerjs";
 
 // Define a type for received messages
-interface ReceivedMessage {
-    from: string;
-    message: MessageData;
-}
+
 
 export function PeerConnection() {
-    const [remotePeerId, setRemotePeerId] = useState('');
-    const [message, setMessage] = useState<DataPacket>({
-        type: 'chat',
-        payload: '',
-        timestamp: Date.now(),
-        senderId: ''
-    });
-    const [receivedMessages, setReceivedMessages] = useState<ReceivedMessage[]>([]);
+    //const [remotePeerId, setRemotePeerId] = useState('');
+    const remotePeerId = useAppStore(state => state.remotePeerId);
+    const setRemotePeerId = useAppStore.getState().setRemotePeerId;
 
     const profile = useUserProfileStore(state => state.profile);
 
-    const onIncomingData = useCallback ((peerId: string, data: DataPacket) => {
-        console.log(peerId,data);
-        setReceivedMessages(prev => [...prev, {from: peerId, message: data.payload}]);
-    },[]);
+    const onData = useCallback((peerId: string, data: DataPacket) => {
+        if (data.type === MessageType.CHAT_MESSAGE && data.chatMessage) {
+            const message: DataPacketChatMessage = data.chatMessage;
+            message.fromPeerId = peerId;
+            notifications.show({
+                title: message.message,
+                message: message.fromPeerId ,
+                color: 'green',
+                autoClose: 5000,
+            });
+            //setReceivedMessages(prev => [...prev, message]);
+        }
+        else {
+            console.log("Unhandled client data:", data);
+            notifications.show({
+                title: `${data.type} Unhandled`,
+                message: JSON.stringify(data, null, 2) ,
+                color: 'red',
+                autoClose: 5000,
+            });
+        }
+    }, []);
+
+    //const connectionStatus = useAppStore(state => state.connectionStatus);
+    const setConnectionStatus = useAppStore.getState().setConnectionStatus;
+    const setPeerList = useAppStore.getState().setPeerList;
+
 
     console.log("Rendering PeerConnection");
+    const onConnection = useCallback(async (conn: DataConnection) =>
+    {
+        notifications.show({
+        title: `Connected to peed`,
+        message: conn.peer,
+        color: 'green',
+        autoClose: 5000,
+    });
+    }, []);
+    const onDisconnection= useCallback (async (peerId: string) => {
+        notifications.show({
+            title: `Disconnected from peed`,
+            message: JSON.stringify(peerId, null, 2) ,
+            color: 'red',
+            autoClose: 5000,
+        });
+    },[]);
+
+
+    const onServerData = useCallback((data: DataPacket) => {
+        if (data.type === MessageType.MATCH_PROPOSED && data.matchProposed) {
+            notifications.show({
+                title: 'Match Proposed',
+                message: `Connecting `,
+                color: 'blue',
+            });
+            setRemotePeerId(data.matchProposed?.targetPeerId);
+            //connect(data.matchProposed?.targetPeerId).catch(console.error);
+        }
+        else if (data.type === MessageType.CANCEL_MATCH_SEARCH && data.cancelMatchSearch) {
+            notifications.show({
+                title: 'Match Search Cancelled',
+                message: 'Your match search has been cancelled',
+                color: 'yellow',
+            });
+
+        }
+        else if (data.type === MessageType.STATUS_UPDATE && data.statusUpdate) {
+            setConnectionStatus(data.statusUpdate.statusTo);
+        }
+        else if (data.type === MessageType.PEER_LIST_UPDATE && data.peerListUpdate) {
+            setPeerList(data.peerListUpdate.connectedPeers);
+        }
+
+        else {
+            console.log("Unhandled server data:", data);
+            notifications.show({
+                title: `${data.type} Unhandled`,
+                message: JSON.stringify(data, null, 2) ,
+                color: 'red',
+                autoClose: 5000,
+            });
+        }
+    }, [setConnectionStatus, setPeerList]);
+    //
+    // const connectedToRemotePeer = useCallback(async ()=>{
+    //     notifications.show({
+    //         title: `connectedToRemotePeer`,
+    //         message: '' ,
+    //         color: 'red',
+    //         autoClose: 5000,
+    //     });
+    // },[]);
 
     const {
-        myPeerId,
+        // myPeerId,
         connectedPeers,
-        isConnecting,
-        error,
+        // isConnecting,
+        // error,
         initialize,
         connect,
-        send,
-        broadcast
-    } = usePeer({test: 'peerjs',onData:onIncomingData});
+        // send,
+        //sendServer,
+        // broadcast
+    } = usePeer({test: 'peerjs', onData: onData, onServerData: onServerData,onConnection:onConnection,onDisconnection:onDisconnection});
 
-    // Update senderId when profile or myPeerId changes
+
+
     useEffect(() => {
-        if (profile) {
-            setMessage(prev => ({
-                ...prev,
-                senderId: profile.id
-            }));
+        if(profile) {
+            console.log("Initializing peer with profile id:", profile.id);
+            void initialize(profile.id);
         }
-    }, [profile]);
+    }, [profile,initialize]);
 
-    const handleInitialize = () => {
-        if (profile != null) {
-            initialize(profile.id).catch(console.error);
+    useEffect(() => {
+        if(connectedPeers.length>0) {
+            notifications.show({
+                title: `connectedToRemotePeer`,
+                message:connectedPeers ,
+                color: 'red',
+                autoClose: 5000,
+            });
+            useAppStore.getState().matchAccepted(connectedPeers[0]);
+            setRemotePeerId(connectedPeers[0]);
         }
-    };
+    }, [connectedPeers]);
+    useEffect(() => {
+        void connect(remotePeerId);
+    }, [connect, remotePeerId]);
 
-    const handleConnect = () => {
-        if (remotePeerId) {
-            connect(remotePeerId).catch(console.error);
-        }
-    };
-
-    const handleSend = (peerId: string) => {
-        if (message && message.payload) {
-            // Update timestamp before sending
-            const messageToSend = {
-                ...message,
-                timestamp: Date.now()
-            };
-            send(peerId, messageToSend);
-            // Reset only the payload after sending
-            setMessage(prev => ({
-                ...prev,
-                payload: ''
-            }));
-        }
-    };
-
-    const handleBroadcast = () => {
-        if (message && message.payload) {
-            // Update timestamp before broadcasting
-            const messageToSend = {
-                ...message,
-                timestamp: Date.now()
-            };
-            broadcast(messageToSend);
-            // Reset only the payload after sending
-            setMessage(prev => ({
-                ...prev,
-                payload: ''
-            }));
-        }
-    };
-
-    const handleMessageChange = (value: string) => {
-        console.log(value);
-        setMessage(prev => ({
-            ...prev,
-            payload: value
-        }));
-    };
-
-    return (
-        <Stack gap="md" p="md">
-            <Paper withBorder p="md">
-                <Stack gap="sm">
-                    <Group justify="space-between">
-                        <Text fw={500}>Your Peer ID:</Text>
-                        {myPeerId ? (
-                            <Badge size="lg">{myPeerId}</Badge>
-                        ) : (
-                            <Button
-                                onClick={handleInitialize}
-                                loading={isConnecting}
-                                disabled={!!myPeerId}
-                            >
-                                Initialize Peer
-                            </Button>
-                        )}
-                    </Group>
-
-                    {error && (
-                        <Text c="red">{error.message}</Text>
-                    )}
-                </Stack>
-            </Paper>
-            <Paper withBorder p="md">
-                {profile?.id}
-            </Paper>
-            <Paper withBorder p="md">
-                <Stack gap="sm">
-                    <Text fw={500}>Connect to a Peer:</Text>
-                    <Group>
-                        <TextInput
-                            placeholder="Enter remote peer ID"
-                            value={remotePeerId}
-                            onChange={(e) => setRemotePeerId(e.currentTarget.value)}
-                            style={{ flex: 1 }}
-                        />
-                        <Button
-                            onClick={handleConnect}
-                            loading={isConnecting}
-                            disabled={!myPeerId || !remotePeerId}
-                        >
-                            Connect
-                        </Button>
-                    </Group>
-                </Stack>
-            </Paper>
-
-            {connectedPeers.length > 0 && (
-                <Paper withBorder p="md">
-                    <Stack gap="sm">
-                        <Text fw={500}>Connected Peers:</Text>
-                        {connectedPeers.map(peerId => (
-                            <Group key={peerId} justify="space-between">
-                                <Badge>{peerId}</Badge>
-                                <Group>
-                                    <Button
-                                        size="xs"
-                                        onClick={() => handleSend(peerId)}
-                                        disabled={!message.payload}
-                                    >
-                                        Send Message
-                                    </Button>
-                                </Group>
-                            </Group>
-                        ))}
-
-                        <TextInput
-                            placeholder="Type a message"
-                            value={message.payload}
-                            onChange={(e) => handleMessageChange(e.currentTarget.value)}
-                        />
-
-                        <Button
-                            onClick={handleBroadcast}
-                            disabled={!message.payload || connectedPeers.length === 0}
-                        >
-                            Broadcast to All
-                        </Button>
-                    </Stack>
-                </Paper>
-            )}
-
-            {receivedMessages.length > 0 && (
-                <Paper withBorder p="md">
-                    <Stack gap="sm">
-                        <Text fw={500}>Received Messages:</Text>
-                        {receivedMessages.map((msg, index) => (
-                            <Group key={index}>
-                                <Badge>{msg.from}:</Badge>
-                                <Text>{JSON.stringify(msg.message)}</Text>
-                            </Group>
-                        ))}
-                    </Stack>
-                </Paper>
-            )}
-        </Stack>
-    );
+    return null;
 }

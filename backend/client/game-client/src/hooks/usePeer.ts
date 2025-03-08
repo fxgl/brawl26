@@ -1,11 +1,14 @@
 import {useState, useEffect, useCallback} from 'react';
 import {DataConnection} from 'peerjs';
-import {DataPacket, PeerJSOption, peerService} from '../utils/peerService';
+import {PeerJSOption, peerService} from '../utils/peerService';
+import {DataPacket} from "../../../../shared/datapacket.ts";
+
 
 interface UsePeerOptions {
     onConnection?: (conn: DataConnection) => void;
     onDisconnection?: (peerId: string) => void;
     onData?: (peerId: string, data: DataPacket) => void;
+    onServerData?: (data: DataPacket) => void;
     onError?: (error: Error) => void;
     test?:string;
 }
@@ -30,9 +33,10 @@ const DEFAULT_PEER_OPTIONS: PeerJSOption = {
     ],
     iceTransportPolicy: 'all',
   },
-  port: 443, secure: true,
-  host: 'brawl.positrondynamics.tech',
-  path: '/peerjs/', key: 'fxbrawl',
+//  port: 443, secure: true,
+//  host: 'brawl.positrondynamics.tech',
+    host: 'localhost', port: 9001,
+    path: '/peerjs/', key: 'fxbrawl',
 };
 
 export function usePeer(options: UsePeerOptions) {
@@ -40,6 +44,7 @@ export function usePeer(options: UsePeerOptions) {
     const [connectedPeers, setConnectedPeers] = useState<string[]>([]);
     const [isConnecting, setIsConnecting] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+
 
 
     // Initialize the peer
@@ -84,6 +89,10 @@ export function usePeer(options: UsePeerOptions) {
     const send = useCallback((peerId: string, data: DataPacket) => {
         return peerService.send(peerId, data);
     }, []);
+    const sendServer = useCallback((data: DataPacket) => {
+        return peerService.sendServer(data);
+    }, []);
+
 
     // Broadcast data to all connected peers
     const broadcast = useCallback((data: DataPacket) => {
@@ -103,6 +112,7 @@ export function usePeer(options: UsePeerOptions) {
                 options.onDisconnection?.(peerId);
             },
             onData: options.onData,
+            onServerData: options.onServerData,
             onError: (err: Error) => {
                 setError(err);
                 options.onError?.(err);
@@ -112,9 +122,10 @@ export function usePeer(options: UsePeerOptions) {
 
         // Clean up on unmount
         return () => {
+            console.error('peerService.destroy();')
             peerService.destroy();
         };
-    }, [ options.onConnection, options.onDisconnection, options.onData, options.onError, initialize]);
+    }, []);
 
     return {
         myPeerId,
@@ -124,6 +135,7 @@ export function usePeer(options: UsePeerOptions) {
         initialize,
         connect,
         send,
+        sendServer,
         broadcast,
         destroy: peerService.destroy.bind(peerService)
     };

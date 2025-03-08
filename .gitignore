@@ -62,3 +62,6 @@ BrawlServer/bin
 buildwebgl
 terraform/.terraform
 terraform/deploy
+backend/client/node_modules
+backend/rtc-server/dist
+backend/rtc-server/node_modules

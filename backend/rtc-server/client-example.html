@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTC Client Example</title>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .control-panel {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 8px 12px;
+            margin-right: 5px;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 70%;
+        }
+        .connected-peers {
+            margin-top: 20px;
+        }
+        .system-message {
+            color: blue;
+            font-style: italic;
+        }
+        .peer-message {
+            color: green;
+        }
+        .my-message {
+            color: black;
+            font-weight: bold;
+        }
+        .server-message {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebRTC Lobby Example</h1>
+    
+    <div class="control-panel">
+        <button id="connectBtn">Connect to Lobby</button>
+        <button id="disconnectBtn" disabled>Disconnect</button>
+        <span id="connectionStatus">Not connected</span>
+    </div>
+    
+    <div id="messages"></div>
+    
+    <div class="message-input">
+        <input type="text" id="messageInput" placeholder="Type a message..." disabled>
+        <button id="sendBtn" disabled>Send</button>
+    </div>
+    
+    <div class="connected-peers">
+        <h3>Connected Peers</h3>
+        <ul id="peersList"></ul>
+    </div>
+
+    <script>
+        // Elements
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const peersList = document.getElementById('peersList');
+        
+        // WebSocket lobby connection
+        let lobbySocket;
+        let myPeerId;
+        
+        // Server configuration
+        const WS_URL = `ws://${window.location.hostname}:${window.location.port}/lobby`;
+        
+        // PeerJS Configuration for direct peer connections
+        const PEER_SERVER = {
+            host: window.location.hostname,
+            port: 9000,
+            path: '/rtc'
+        };
+        
+        // PeerJS instance
+        let peer;
+        let peerConnections = {};
+        
+        // Helper function to add message to the chat
+        function addMessage(message, type = 'system') {
+            const msgElement = document.createElement('div');
+            msgElement.textContent = message;
+            msgElement.className = type + '-message';
+            messagesContainer.appendChild(msgElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Update the list of connected peers
+        function updatePeersList(peers) {
+            peersList.innerHTML = '';
+            peers.forEach(peerId => {
+                if (peerId !== myPeerId) {
+                    const li = document.createElement('li');
+                    li.textContent = peerId;
+                    peersList.appendChild(li);
+                }
+            });
+        }
+        
+        // Connect to the lobby
+        function connectToLobby() {
+            // Create WebSocket connection to the lobby
+            lobbySocket = new WebSocket(WS_URL);
+            
+            // Connection opened
+            lobbySocket.addEventListener('open', (event) => {
+                addMessage('Connected to the lobby server!');
+                
+                // Enable UI elements
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+            });
+            
+            // Listen for messages from the lobby
+            lobbySocket.addEventListener('message', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Received data:', data);
+                    
+                    // If this is the first message (welcome), store my peer ID
+                    if (data.type === 'welcome') {
+                        myPeerId = data.peerId;
+                        connectionStatus.textContent = `Connected as: ${myPeerId}`;
+                    }
+                    
+                    // Handle different message types from the lobby
+                    switch (data.type) {
+                        case 'welcome':
+                            addMessage(data.message);
+                            updatePeersList(data.connectedPeers);
+                            break;
+                            
+                        case 'peerJoined':
+                            addMessage(`Peer joined: ${data.peerId}`);
+                            updatePeersList(data.connectedPeers);
+                            break;
+                            
+                        case 'peerLeft':
+                            addMessage(`Peer left: ${data.peerId}`);
+                            updatePeersList(data.connectedPeers);
+                            break;
+                            
+                        case 'message':
+                            addMessage(`${data.from}: ${data.content}`, 'peer');
+                            break;
+                            
+                        case 'serverMessage':
+                            addMessage(`SERVER: ${data.content}`, 'server');
+                            break;
+
+                        case 'signal':
+                            // Handle WebRTC signaling
+                            handleSignalingMessage(data);
+                            break;
+                            
+                        default:
+                            addMessage(`Unknown message type: ${JSON.stringify(data)}`);
+                    }
+                } catch (err) {
+                    console.error('Error parsing message:', err);
+                }
+            });
+            
+            // Connection closed
+            lobbySocket.addEventListener('close', (event) => {
+                addMessage('Disconnected from lobby server');
+                resetUI();
+            });
+            
+            // Connection error
+            lobbySocket.addEventListener('error', (event) => {
+                addMessage('Error connecting to lobby server');
+                console.error('WebSocket error:', event);
+                resetUI();
+            });
+        }
+        
+        // Handle WebRTC signaling messages
+        function handleSignalingMessage(data) {
+            // This would be used for WebRTC connection establishment
+            console.log('Received signaling message:', data);
+        }
+        
+        // Disconnect from the lobby
+        function disconnectFromLobby() {
+            if (lobbySocket) {
+                lobbySocket.close();
+            }
+            
+            resetUI();
+            addMessage('Disconnected from server');
+        }
+        
+        // Reset UI to initial state
+        function resetUI() {
+            connectionStatus.textContent = 'Not connected';
+            connectBtn.disabled = false;
+            disconnectBtn.disabled = true;
+            messageInput.disabled = true;
+            sendBtn.disabled = true;
+            peersList.innerHTML = '';
+            myPeerId = null;
+        }
+        
+        // Send a message to the lobby
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            
+            if (message && lobbySocket && lobbySocket.readyState === WebSocket.OPEN) {
+                // Send the message to the lobby
+                lobbySocket.send(JSON.stringify({
+                    type: 'broadcast',
+                    content: message
+                }));
+                
+                // Display the sent message
+                addMessage(`You: ${message}`, 'my');
+                
+                // Clear the input
+                messageInput.value = '';
+            }
+        }
+        
+        // Event listeners
+        connectBtn.addEventListener('click', connectToLobby);
+        disconnectBtn.addEventListener('click', disconnectFromLobby);
+        
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Initial message
+        addMessage('Welcome to the WebRTC client example. Click "Connect to Lobby" to start.');
+    </script>
+</body>
+</html>
