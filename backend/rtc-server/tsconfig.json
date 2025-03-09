@@ -10,7 +10,10 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "../../shared/datapacket": ["./src/__tests__/shared/datapacket"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],

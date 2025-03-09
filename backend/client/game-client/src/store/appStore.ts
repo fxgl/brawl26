@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import {peerService} from "../utils/peerService.ts";
-import {ConnectionStatusEnum, DataPacket, MessageType} from "../../../../shared/datapacket.ts";
+import {ConnectionStatusEnum, DataPacket, MessageType, Scores} from "../../../../shared/datapacket.ts";
 
 
 interface AppState {
@@ -13,11 +13,12 @@ interface AppState {
   stopLookForServer: () => void;
   peerList: string[];
   setPeerList: (peers:string[])=> void;
-  matchAccepted: (peer:string)=> void;
-  remotePeerId: string;
-  setRemotePeerId: (peer:string) => void;
+  matchAccepted:(peers:string[])=> void;
+  remotePeerIds: string[];
+  setRemotePeerIds: (peer:string[]) => void;
+  acceptMatch: (proposalId: string)=> void;
 
-  quitMatch: (peer:string,reason:string)=>void;
+  quitMatch:  (reason: string,scores:Scores)=>void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -35,16 +36,21 @@ export const useAppStore = create<AppState>((set) => ({
     const looking: DataPacket = {type: MessageType.CANCEL_MATCH_SEARCH, cancelMatchSearch: {}};
     await peerService.sendServer(looking);
   },
-  matchAccepted: async (peer:string) => {
-    const packet: DataPacket = {type: MessageType.MATCH_ACCEPTED, matchAccepted: {targetPeerId: peer}};
+  matchAccepted: async (peers:string[]) => {
+    const packet: DataPacket = {type: MessageType.MATCH_ACCEPTED, matchAccepted: {targetPeerIds: peers}};
     await peerService.sendServer(packet);
   },
   peerList: [],
   setPeerList: (peers:string[])=> set({ peerList: peers }),
-  remotePeerId: '',
-  setRemotePeerId: (peer:string)=>set({remotePeerId: peer}),
-  quitMatch:  async (peer:string,reason: string) => {
-    const packet: DataPacket = {type: MessageType.CANCEL_MATCH, cancelMatch: {targetPeerId: peer,reason: reason}};
+  remotePeerIds: [],
+  setRemotePeerIds: (peer:string[])=>set({remotePeerIds: peer}),
+  quitMatch:  async (reason: string,scores:Scores) => {
+    const packet: DataPacket = {type: MessageType.LEAVE_MATCH, leaveMatch: {reason: reason,scores:scores}};
+    await peerService.sendServer(packet);
+  },
+  acceptMatch: async (proposalId:string)=>{
+    const packet: DataPacket = {type: MessageType.MATCH_ACCEPT, matchAccept: {proposalId:proposalId}};
     await peerService.sendServer(packet);
   }
+
 }));

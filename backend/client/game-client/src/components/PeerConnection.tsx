@@ -12,8 +12,8 @@ import {Loader, Modal, Stack, Text} from "@mantine/core";
 
 export function PeerConnection() {
     //const [remotePeerId, setRemotePeerId] = useState('');
-    const remotePeerId = useAppStore(state => state.remotePeerId);
-    const setRemotePeerId = useAppStore.getState().setRemotePeerId;
+    const remotePeerIds = useAppStore(state => state.remotePeerIds);
+    const setRemotePeerIds = useAppStore.getState().setRemotePeerIds;
 
     const profile = useUserProfileStore(state => state.profile);
 
@@ -70,7 +70,8 @@ export function PeerConnection() {
                 message: `Connecting `,
                 color: 'blue',
             });
-            setRemotePeerId(data.matchProposed?.targetPeerId);
+            //setRemotePeerIds(data.matchProposed?.targetPeerIds);
+
             //connect(data.matchProposed?.targetPeerId).catch(console.error);
         } else if (data.type === MessageType.CANCEL_MATCH_SEARCH && data.cancelMatchSearch) {
             notifications.show({
@@ -134,6 +135,7 @@ export function PeerConnection() {
         if (profile && connectionStatus === ConnectionStatusEnum.idle) {
             console.log("Initializing peer with profile id:", profile.id);
             setError('');
+
             initialize(profile.id).catch((error) => {
                 setConnectionStatus(ConnectionStatusEnum.error);
                 console.error("Failed to initialize peer:", error.type);
@@ -147,6 +149,7 @@ export function PeerConnection() {
                     setError(error.type);
                 }
             })//.then(()=>setYouAreAlreadyConnected(false));
+            setConnectionStatus(ConnectionStatusEnum.connecting);
         }
     }, [profile, initialize, connectionStatus, setConnectionStatus]);
 
@@ -169,17 +172,17 @@ export function PeerConnection() {
                 color: 'red',
                 autoClose: 5000,
             });
-            useAppStore.getState().matchAccepted(connectedPeers[0]);
-            setRemotePeerId(connectedPeers[0]);
+            useAppStore.getState().matchAccepted(connectedPeers);
+            setRemotePeerIds(connectedPeers);
         }
     }, [connectedPeers]);
     useEffect(() => {
-        void connect(remotePeerId);
-    }, [connect, remotePeerId]);
+        void connect(remotePeerIds[0]);
+    }, [connect, remotePeerIds]);
 
 
     return (
-        <Modal opened={[ConnectionStatusEnum.idle, ConnectionStatusEnum.error].includes(connectionStatus)} centered
+        <Modal opened={[ConnectionStatusEnum.idle, ConnectionStatusEnum.error, ConnectionStatusEnum.connecting].includes(connectionStatus)} centered
                onClose={() => setConnectionStatus(ConnectionStatusEnum.idle)}>
 
             <Stack align={'center'}>

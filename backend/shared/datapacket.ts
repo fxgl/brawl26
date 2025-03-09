@@ -11,7 +11,7 @@ export enum MessageType {
     // New message types for matchmaking
     LOOKING_FOR_MATCH = 'lookingForMatch',
     CANCEL_MATCH_SEARCH = 'cancelMatchSearch',
-    CANCEL_MATCH = 'cancelMatch',
+    LEAVE_MATCH = 'leaveMatch',  // Changed from CANCEL_MATCH
     MATCH_PROPOSED = 'matchProposed',
     MATCH_ACCEPTED = 'matchAccepted',
     MATCH_DECLINED = 'matchDeclined',
@@ -27,11 +27,38 @@ export enum MessageType {
     MATCH_RECONNECTED = "MATCH_RECONNECTED",
     PEER_RECONNECTED = "PEER_RECONNECTED",
     PEER_DISCONNECTED = "PEER_DISCONNECTED",
+    // New message types for multi-peer matches
+    HOST_ASSIGNED = "HOST_ASSIGNED",
+    HOST_CHANGED = "HOST_CHANGED",
+    PEER_LEFT_MATCH = "PEER_LEFT_MATCH",
+    SUBMIT_SCORE = "SUBMIT_SCORE",
+    SCORE_SUBMITTED = "SCORE_SUBMITTED",
+    MATCH_OPPORTUNITY = "MATCH_OPPORTUNITY",
+    MATCH_DECLINE = "MATCH_DECLINE",
+    PEER_DECLINED_MATCH = "PEER_DECLINED_MATCH",
+    PEER_ACCEPTED_MATCH = "PEER_ACCEPTED_MATCH",
+    MATCH_ACCEPT = "MATCH_ACCEPT",
+    MATCH_PROPOSAL_TIMEOUT = "MATCH_PROPOSAL_TIMEOUT"
 }
+
+// Structure to track match proposals
+export interface MatchProposal {
+    initiatorId: string;
+    targetPeerIds: string[];
+    acceptedPeers: Set<string>;
+    timeoutId: NodeJS.Timeout;
+    maxPeers: number;
+}
+export interface Scores
+{
+    result: Record<string, string>;
+}
+
+
 
 export enum ConnectionStatusEnum {
     idle,
-    connecting  ,
+    connecting,
     connected,
     lookingForMatch,
     cancellingMatch,
@@ -39,7 +66,23 @@ export enum ConnectionStatusEnum {
     match,
     startLookingForMatch,
     error,
+    matchAccepting,
+}
 
+export interface PeerResult {
+    peerId: string;
+    scores: Scores; // null if peer left without submitting a score
+}
+
+export interface Match {
+    matchId: string;
+    peerIds: string[];
+    hostId: string;
+    startTime: number;
+    timeoutId: NodeJS.Timeout;
+    activeMembers: number;
+    results: Scores[];
+    finalScore: Scores; // The final agreed score (or null if no consensus)
 }
 
 // Game state interface
@@ -57,15 +100,23 @@ export interface GameState {
     winner: string | null;
 }
 
-
 export interface DataPacketChatMessage {
-    fromPeerId : string,
+    fromPeerId: string,
     toPeerId?: string,
     message: string
 }
-export interface DataPacketMathMakingParams {
+
+export interface DataPacketMatchMakingParams {
     arena: string; // The game arena where the match is being proposed
+    maxPeers?: number; // Maximum number of peers allowed in the match
 }
+
+// Peer result interface for match scoring
+export interface PeerResult {
+    peerId: string;
+    score: number | null; // null if peer left without submitting a score
+}
+
 // Unified DataPacket interface
 export interface DataPacket {
     type: MessageType;
@@ -88,11 +139,10 @@ export interface DataPacket {
         message: string;
         stackTrace?: string[];
     }
-    statusUpdate?:{
-      statusFrom?: ConnectionStatusEnum;
-      statusTo:ConnectionStatusEnum
+    statusUpdate?: {
+        statusFrom?: ConnectionStatusEnum;
+        statusTo: ConnectionStatusEnum
     },
-
     chatMessage?: DataPacketChatMessage,
     peerJoined?: {
         peerId: string;
@@ -104,6 +154,8 @@ export interface DataPacket {
     };
     matchEnded?: {
         reason: string;
+        finalScore?: Scores; // The final agreed-upon score
+
     }
     broadcast?: {
         content: string;
@@ -118,46 +170,100 @@ export interface DataPacket {
     serverMessage?: {
         content: string;
     };
-    // New fields for matchmaking
+    // Updated fields for matchmaking
     lookingForMatch?: {
-        params?: DataPacketMathMakingParams; // Optional matchmaking preferences
+        params?: DataPacketMatchMakingParams; // Optional matchmaking preferences
+        maxPeers?: number; // Maximum number of peers for this match
     };
     cancelMatchSearch?: {
         reason?: string;
     };
+    matchAccept?:{
+        proposalId: string;
+    };
     matchProposed?: {
-        targetPeerId: string;
-        params?: DataPacketMathMakingParams; // Optional match details
+        proposalId: string;
+        timeoutSeconds: number;
+        targetPeerIds: string[]; // Now an array for multiple peers
+        params?: DataPacketMatchMakingParams; // Optional match details
+
     };
+    matchProposalTimeout?:{
+        proposalId: string;
+        message: string;
+};
     matchAccepted?: {
-        targetPeerId: string;
+        targetPeerIds: string[]; // Now an array for multiple peers
+        maxPeers?: number; // Maximum number of peers for this match
     };
+    matchDecline?: {
+        proposalId: string;
+        targetPeerIds: string[]; // Now an array for multiple peers
+        maxPeers?: number; // Maximum number of peers for this match
+    };
+    peerDeclinedMatch?:{
+        proposalId:string,
+        peerId:string
+    },
+    peerAcceptedMatch?: {
+        proposalId: string,
+        peerId: string,
+        acceptedCount: number,
+        totalCount: number
+    },
     matchDeclined?: {
-        targetPeerId: string;
+        targetPeerIds: string[]; // Now an array for multiple peers
         reason?: string;
     };
-    cancelMatch?: {
-        targetPeerId: string;
+    // Updated from cancelMatch to leaveMatch
+    leaveMatch?: {
         reason?: string;
+        scores?: Scores; // Optional score when leaving match
     };
     matchCreated?: {
-        targetPeerId: string;
-        matchDetails?: DataPacketMathMakingParams; // Optional match configuration
+        matchId?: string;
+        peerIds: string[]; // All peers in the match
+        isHost: boolean; // Whether this peer is the host
+        matchDetails?: DataPacketMatchMakingParams; // Optional match configuration
     };
     peerListUpdate?: {
         connectedPeers: string[];
     };
     matchReconnected?: {
-        targetPeerId: string;
-
-    },
-    peerReconnected?:{
+        matchId: string;
+        peerIds: string[]; // All peers in the match
+        isHost: boolean; // Whether this peer is the host
+   
+    };
+    peerReconnected?: {
         peerId: string;
-    }
-    peerDisconnected?:{
+    };
+    peerDisconnected?: {
         peerId: string;
-    }
-
+    };
+    // New fields for multi-peer matches
+    hostAssigned?: {
+        isHost: boolean;
+    };
+    hostChanged?: {
+        newHostId: string;
+    };
+    peerLeftMatch?: {
+        peerId: string;
+    };
+    submitScore?: {
+        scores: Scores;
+    };
+    scoreSubmitted?: {
+        peerId: string;
+        scores: Scores;
+    };
+    matchOpportunity?: {
+        proposalId: string;
+        timeoutSeconds: number;
+        initiatorId: string;
+        allPeerIds: string[]; // All peers that would be in the match
+    };
 }
 
 export interface DataPacketWrapper {
