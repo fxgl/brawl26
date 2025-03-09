@@ -46,16 +46,16 @@ export function PongGame() {
 
   // Handle receiving game data from peer
   const onData = useCallback((_peerId: string, data: DataPacket) => {
-    console.log(`Received game data from ${_peerId}:`, data);
+   // console.log(`Received game data from ${_peerId}:`, data);
     if (data.type === MessageType.GAME_INPUT && data.gameInput) {
       const inputData = data.gameInput.data as PongInputData;
 
       setGameState(prevState => {
         // Update opponent's paddle position
         if (isHost) {
-          return { ...prevState, rightPaddleY: inputData.paddleY };
+          return { ...prevState, rightPaddleY: inputData.paddleY+prevState.rightPaddleY };
         } else {
-          return { ...prevState, leftPaddleY: inputData.paddleY };
+          return { ...prevState, leftPaddleY: inputData.paddleY+prevState.leftPaddleY };
         }
       });
      }
@@ -115,7 +115,7 @@ export function PongGame() {
         data: inputData
       }
     };
-    console.log(`Sending ${JSON.stringify( packet)}`)
+    //console.log(`Sending ${JSON.stringify( packet)}`)
     
     send(remotePeerId, packet);
   }, [remotePeerId, send]);
@@ -176,18 +176,23 @@ export function PongGame() {
         // Update paddle position based on key presses
         if (isHost) {
           // Host controls left paddle
-          if (keysPressed.ArrowUp) leftPaddleY = Math.max(0, leftPaddleY - PADDLE_SPEED * deltaTime);
-          if (keysPressed.ArrowDown) leftPaddleY = Math.min(GAME_HEIGHT - PADDLE_HEIGHT, leftPaddleY + PADDLE_SPEED * deltaTime);
+
+          let newPos = leftPaddleY;
+          if (keysPressed.ArrowUp) newPos = Math.max(0, leftPaddleY - PADDLE_SPEED * deltaTime);
+          if (keysPressed.ArrowDown) newPos = Math.min(GAME_HEIGHT - PADDLE_HEIGHT, leftPaddleY + PADDLE_SPEED * deltaTime);
           
           // Send paddle position to peer
-          sendPaddlePosition(leftPaddleY);
+          sendPaddlePosition(newPos-leftPaddleY);
+          leftPaddleY= newPos;
         } else {
+          let newPos = rightPaddleY;
           // Client controls right paddle
-          if (keysPressed.ArrowUp) rightPaddleY = Math.max(0, rightPaddleY - PADDLE_SPEED * deltaTime);
-          if (keysPressed.ArrowDown) rightPaddleY = Math.min(GAME_HEIGHT - PADDLE_HEIGHT, rightPaddleY + PADDLE_SPEED * deltaTime);
+          if (keysPressed.ArrowUp) newPos = Math.max(0, rightPaddleY - PADDLE_SPEED * deltaTime);
+          if (keysPressed.ArrowDown) newPos = Math.min(GAME_HEIGHT - PADDLE_HEIGHT, rightPaddleY + PADDLE_SPEED * deltaTime);
           
           // Send paddle position to peer
-          sendPaddlePosition(rightPaddleY);
+          sendPaddlePosition(newPos-rightPaddleY);
+          rightPaddleY= newPos;
         }
 
         // Only host updates ball position to avoid desync
