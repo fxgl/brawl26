@@ -116,6 +116,11 @@ class PeerService {
       try {
         const conn = this.peer.connect(remotePeerId);
 
+        if(!conn)
+        {
+          reject(`Failed to connect to peer ${remotePeerId}`);
+        }
+
         conn.on('open', () => {
           this.handleConnection(conn);
           resolve(conn);

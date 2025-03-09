@@ -20,10 +20,11 @@ export default function App() {
     return <MantineEmotionProvider>
 
         <MantineProvider>
+            <PeerConnection></PeerConnection>
             <Notifications/>
 
             {connectionStatus=== ConnectionStatusEnum.match ? <PongGame /> :  <Lobby></Lobby>}
-            <PeerConnection></PeerConnection>
+
             <ConnectionStatus/>
 
         </MantineProvider>

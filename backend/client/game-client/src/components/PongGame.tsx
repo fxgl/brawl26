@@ -4,6 +4,7 @@ import { useUserProfileStore } from "../store/userProfileStore";
 import { DataPacket, GameState, MessageType } from "../../../../shared/datapacket.ts";
 import {useAppStore} from "../store/appStore.ts";
 import {peerService} from "../utils/peerService.ts";
+import {IconDoorExit} from "@tabler/icons-react";
 
 // Game constants
 const PADDLE_HEIGHT = 100;
@@ -385,9 +386,13 @@ export function PongGame() {
     };
   }, []);
 
+  function quitTheMatch() {
+    useAppStore.getState().quitMatch(remotePeerId,'player abort');
+  }
+
   return (
     <Stack align="center" >
-      <Text size="xl" w={700}>Pong Game peer:{remotePeerId}</Text>
+      <Box><Text size="xl" w={700}>Pong Game</Text><Button onClick={quitTheMatch}><IconDoorExit></IconDoorExit></Button></Box>
 
       {gameState.gameOver ? (
         <Box>

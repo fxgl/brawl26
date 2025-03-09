@@ -11,6 +11,7 @@ export enum MessageType {
     // New message types for matchmaking
     LOOKING_FOR_MATCH = 'lookingForMatch',
     CANCEL_MATCH_SEARCH = 'cancelMatchSearch',
+    CANCEL_MATCH = 'cancelMatch',
     MATCH_PROPOSED = 'matchProposed',
     MATCH_ACCEPTED = 'matchAccepted',
     MATCH_DECLINED = 'matchDeclined',
@@ -22,6 +23,10 @@ export enum MessageType {
     GAME_INPUT = 'GAME_INPUT',
     GAME_STATE = 'GAME_STATE',
     GAME_START = 'GAME_START',
+    MATCH_ENDED = "MATCH_ENDED",
+    MATCH_RECONNECTED = "MATCH_RECONNECTED",
+    PEER_RECONNECTED = "PEER_RECONNECTED",
+    PEER_DISCONNECTED = "PEER_DISCONNECTED",
 }
 
 export enum ConnectionStatusEnum {
@@ -32,7 +37,8 @@ export enum ConnectionStatusEnum {
     cancellingMatch,
     approvingMath,
     match,
-    startLookingForMatch
+    startLookingForMatch,
+    error,
 
 }
 
@@ -96,6 +102,9 @@ export interface DataPacket {
         peerId: string;
         connectedPeers: string[];
     };
+    matchEnded?: {
+        reason: string;
+    }
     broadcast?: {
         content: string;
     };
@@ -127,6 +136,10 @@ export interface DataPacket {
         targetPeerId: string;
         reason?: string;
     };
+    cancelMatch?: {
+        targetPeerId: string;
+        reason?: string;
+    };
     matchCreated?: {
         targetPeerId: string;
         matchDetails?: DataPacketMathMakingParams; // Optional match configuration
@@ -134,6 +147,17 @@ export interface DataPacket {
     peerListUpdate?: {
         connectedPeers: string[];
     };
+    matchReconnected?: {
+        targetPeerId: string;
+
+    },
+    peerReconnected?:{
+        peerId: string;
+    }
+    peerDisconnected?:{
+        peerId: string;
+    }
+
 }
 
 export interface DataPacketWrapper {

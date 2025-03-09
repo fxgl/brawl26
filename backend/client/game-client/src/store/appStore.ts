@@ -16,6 +16,8 @@ interface AppState {
   matchAccepted: (peer:string)=> void;
   remotePeerId: string;
   setRemotePeerId: (peer:string) => void;
+
+  quitMatch: (peer:string,reason:string)=>void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -40,5 +42,9 @@ export const useAppStore = create<AppState>((set) => ({
   peerList: [],
   setPeerList: (peers:string[])=> set({ peerList: peers }),
   remotePeerId: '',
-  setRemotePeerId: (peer:string)=>set({remotePeerId: peer})
+  setRemotePeerId: (peer:string)=>set({remotePeerId: peer}),
+  quitMatch:  async (peer:string,reason: string) => {
+    const packet: DataPacket = {type: MessageType.CANCEL_MATCH, cancelMatch: {targetPeerId: peer,reason: reason}};
+    await peerService.sendServer(packet);
+  }
 }));
