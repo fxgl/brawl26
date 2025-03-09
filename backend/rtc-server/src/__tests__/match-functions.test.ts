@@ -164,9 +164,11 @@ describe('Match Functions', () => {
       // Remove peer1 from connectedPeers to simulate disconnection
       connectedPeers.delete('peer1');
       
-      // Call assignNewHost
-      const assignNewHost = matchFunctionsModule.assignNewHost;
-      assignNewHost(match);
+      // Import assignNewHost directly from match.ts to avoid the module issue
+      const { assignNewHost } = require('../match/match');
+      
+      // Call assignNewHost with the proper parameters
+      assignNewHost(match, connectedPeers);
       
       // Verify that a new host was assigned
       expect(match.hostId).not.toBe('peer1');
@@ -175,31 +177,32 @@ describe('Match Functions', () => {
       // Verify that the new host was notified
       const newHostProfile = connectedPeers.get(match.hostId);
       expect(newHostProfile).toBeDefined();
-      // const messages = newHostProfile.rtcClient.getSentMessages();
-      //
-      // // Find HOST_ASSIGNED message
-      // const hostAssignedMessage = messages.find((msg: any) =>
-      //   msg.type === MessageType.DATA && msg.packet.type === MessageType.HOST_ASSIGNED
-      // );
-      //
-      // expect(hostAssignedMessage).toBeDefined();
-      // expect(hostAssignedMessage.packet.hostAssigned.isHost).toBe(true);
-      //
+      
+      const messages = newHostProfile.rtcClient.getSentMessages();
+      
+      // Find HOST_ASSIGNED message
+      const hostAssignedMessage = messages.find((msg: any) =>
+        msg.type === MessageType.DATA && msg.packet.type === MessageType.HOST_ASSIGNED
+      );
+      
+      expect(hostAssignedMessage).toBeDefined();
+      expect(hostAssignedMessage.packet.hostAssigned.isHost).toBe(true);
+      
       // Verify that other peers were notified (there should be at least one connected peer)
       const otherPeerIds = peerIds.filter(id => id !== match.hostId && connectedPeers.has(id));
       expect(otherPeerIds.length).toBeGreaterThan(0);
       
       otherPeerIds.forEach(id => {
-        // const peerProfile = connectedPeers.get(id);
-        // const messages = peerProfile.rtcClient.getSentMessages();
-        //
-        // // Find HOST_CHANGED message
-        // const hostChangedMessage = messages.find((msg: any) =>
-        //   msg.type === MessageType.DATA && msg.packet.type === MessageType.HOST_CHANGED
-        // );
-        //
-        // expect(hostChangedMessage).toBeDefined();
-        // expect(hostChangedMessage.packet.hostChanged.newHostId).toBe(match.hostId);
+        const peerProfile = connectedPeers.get(id);
+        const peerMessages = peerProfile.rtcClient.getSentMessages();
+        
+        // Find HOST_CHANGED message
+        const hostChangedMessage = peerMessages.find((msg: any) =>
+          msg.type === MessageType.DATA && msg.packet.type === MessageType.HOST_CHANGED
+        );
+        
+        expect(hostChangedMessage).toBeDefined();
+        expect(hostChangedMessage.packet.hostChanged.newHostId).toBe(match.hostId);
       });
     });
   });

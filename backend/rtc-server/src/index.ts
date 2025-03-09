@@ -1,6 +1,6 @@
 // Import modules
 import { IClient, IMessage } from 'peer';
-import { ConnectionStatusEnum, DataPacket, DataPacketWrapper, Match, MatchProposal, MessageType, Scores } from "./__tests__/shared/datapacket";
+import { ConnectionStatusEnum, DataPacket, DataPacketWrapper, Match, MatchProposal, MessageType, Scores } from "../../shared/datapacket";
 import { ClientProfile } from './types';
 import { peerServer, server, startServer } from './server/server';
 import { MAX_PEERS_PER_MATCH } from './server/config';
@@ -67,9 +67,7 @@ export function endMatch(matchId: string): void {
     endMatchFn(matchId, activeMatches, peerToMatchMap, connectedPeers);
 }
 
-export function assignNewHost(match: Match): void {
-    assignNewHost(match, connectedPeers);
-}
+
 
 export function handlePeerStateChange(client: IClient, packet: DataPacket): void {
     handlePeerStateChangeFn(client, packet, connectedPeers, activeMatches, peerToMatchMap, activeProposals);
