@@ -74,7 +74,7 @@ export function usePeer(options: UsePeerOptions) {
 
         try {
             const conn = await peerService.connect(remotePeerId);
-            setConnectedPeers(peerService.getConnectedPeers());
+            //setConnectedPeers(peerService.getConnectedPeers());
             return conn;
         } catch (err) {
             const error = err instanceof Error ? err : new Error(String(err));

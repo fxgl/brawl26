@@ -37,13 +37,6 @@ export declare enum MessageType {
     MATCH_ACCEPT = "MATCH_ACCEPT",
     MATCH_PROPOSAL_TIMEOUT = "MATCH_PROPOSAL_TIMEOUT"
 }
-export interface MatchProposal {
-    initiatorId: string;
-    targetPeerIds: string[];
-    acceptedPeers: Set<string>;
-    timeoutId: NodeJS.Timeout;
-    maxPeers: number;
-}
 export interface Scores {
     result: Record<string, string>;
 }
@@ -98,6 +91,12 @@ export interface DataPacketMatchMakingParams {
 export interface PeerResult {
     peerId: string;
     score: number | null;
+}
+export interface MatchInformation {
+    matchId?: string;
+    peerIds: string[];
+    isHost: boolean;
+    matchDetails?: DataPacketMatchMakingParams;
 }
 export interface DataPacket {
     type: MessageType;
@@ -197,12 +196,7 @@ export interface DataPacket {
         reason?: string;
         scores?: Scores;
     };
-    matchCreated?: {
-        matchId?: string;
-        peerIds: string[];
-        isHost: boolean;
-        matchDetails?: DataPacketMatchMakingParams;
-    };
+    matchCreated?: MatchInformation;
     peerListUpdate?: {
         connectedPeers: string[];
     };

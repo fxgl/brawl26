@@ -1,6 +1,6 @@
 import { IClient, IMessage } from 'peer';
-import { ConnectionStatusEnum, DataPacket, DataPacketWrapper, Match, MatchProposal, MessageType, Scores } from  "../../../shared/datapacket";
-import { ClientProfile } from '../types';
+import { ConnectionStatusEnum, DataPacket, DataPacketWrapper, MessageType, Scores } from  "../../../shared/datapacket";
+import {ClientProfile, Match, MatchProposal} from '../types';
 import { changeAndNotifyStatusChange, notifyError } from '../utils/helpers';
 import { MAX_PEERS_PER_MATCH } from '../server/config';
 import { assignNewHost, endMatch, leavePeerFromMatch, notifyMatchReconnection } from '../match/match';
@@ -84,7 +84,7 @@ export function handlePeerStateChange(
                                         type: MessageType.PEER_ACCEPTED_MATCH,
                                         peerAcceptedMatch: {
                                             proposalId,
-                                            peerId: clientId,
+                                            hostPeerId: proposal.hostId,
                                             acceptedCount: proposal.acceptedPeers.size,
                                             totalCount: allPeerIds.length
                                         }

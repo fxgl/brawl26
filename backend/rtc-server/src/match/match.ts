@@ -1,5 +1,5 @@
-import { ConnectionStatusEnum, DataPacketWrapper, Match, MessageType, Scores } from '../../../shared/datapacket';
-import { ClientProfile } from '../types';
+import { ConnectionStatusEnum, DataPacketWrapper, MessageType, Scores } from '../../../shared/datapacket';
+import {ClientProfile, Match} from '../types';
 import { changeAndNotifyStatusChange } from '../utils/helpers';
 import { MATCH_TIMEOUT } from '../server/config';
 

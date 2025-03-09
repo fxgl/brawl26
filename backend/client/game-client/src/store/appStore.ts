@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import {peerService} from "../utils/peerService.ts";
-import {ConnectionStatusEnum, DataPacket, MessageType, Scores} from "../../../../shared/datapacket.ts";
+import {ConnectionStatusEnum, DataPacket, MessageType, Scores,MatchInformation} from "../../../../shared/datapacket.ts";
 
 
 interface AppState {
@@ -17,8 +17,10 @@ interface AppState {
   remotePeerIds: string[];
   setRemotePeerIds: (peer:string[]) => void;
   acceptMatch: (proposalId: string)=> void;
-
   quitMatch:  (reason: string,scores:Scores)=>void;
+  currentMatch: MatchInformation|null;
+  setCurrentMatch: (match: MatchInformation|null) => void;
+
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -51,6 +53,10 @@ export const useAppStore = create<AppState>((set) => ({
   acceptMatch: async (proposalId:string)=>{
     const packet: DataPacket = {type: MessageType.MATCH_ACCEPT, matchAccept: {proposalId:proposalId}};
     await peerService.sendServer(packet);
-  }
+  },
+  currentMatch: null,
+  setCurrentMatch: (currentMatch: MatchInformation|null) =>
+    set({currentMatch:currentMatch})
+
 
 }));

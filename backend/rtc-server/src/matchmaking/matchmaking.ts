@@ -1,5 +1,5 @@
-import { ConnectionStatusEnum, DataPacketWrapper, Match, MatchProposal, MessageType } from  "../../../shared/datapacket";
-import { ClientProfile } from '../types';
+import { ConnectionStatusEnum, DataPacketWrapper, MessageType } from  "../../../shared/datapacket";
+import {ClientProfile, Match, MatchProposal} from '../types';
 import { changeAndNotifyStatusChange, generateProposalId } from '../utils/helpers';
 import { MAX_PEERS_PER_MATCH, PROPOSAL_TIMEOUT } from '../server/config';
 // Import removed to avoid circular dependencies - createMatch is used from index.ts
@@ -65,6 +65,7 @@ export function notifyPotentialMatch(
     // Create and store the proposal
     const proposal: MatchProposal = {
         initiatorId,
+        hostId: initiatorId,
         targetPeerIds,
         acceptedPeers: new Set([initiatorId]), // Initiator automatically accepts
         timeoutId,
@@ -135,7 +136,7 @@ export function handleProposalTimeout(
                     }
                 });
             } else {
-                // Non-accepted peers get a different message but stay in their current state
+                changeAndNotifyStatusChange(peer, ConnectionStatusEnum.connected);
                 peer.rtcClient.send<DataPacketWrapper>({
                     type: MessageType.DATA, packet: {
                         type: MessageType.MATCH_PROPOSAL_TIMEOUT,

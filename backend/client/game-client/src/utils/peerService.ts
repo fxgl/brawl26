@@ -75,7 +75,7 @@ class PeerService {
         });
 
         this.peer.on('error', (err) => {
-          console.error('Peer error:', err);
+          console.error('Peer error:', err,err.type);
           if (this.events.onError) {
             this.events.onError(err);
           }

@@ -41,14 +41,7 @@ export enum MessageType {
     MATCH_PROPOSAL_TIMEOUT = "MATCH_PROPOSAL_TIMEOUT"
 }
 
-// Structure to track match proposals
-export interface MatchProposal {
-    initiatorId: string;
-    targetPeerIds: string[];
-    acceptedPeers: Set<string>;
-    timeoutId: NodeJS.Timeout;
-    maxPeers: number;
-}
+
 export interface Scores
 {
     result: Record<string, string>;
@@ -74,16 +67,6 @@ export interface PeerResult {
     scores: Scores; // null if peer left without submitting a score
 }
 
-export interface Match {
-    matchId: string;
-    peerIds: string[];
-    hostId: string;
-    startTime: number;
-    timeoutId: NodeJS.Timeout;
-    activeMembers: number;
-    results: Scores[];
-    finalScore: Scores; // The final agreed score (or null if no consensus)
-}
 
 // Game state interface
 export interface GameState {
@@ -115,6 +98,14 @@ export interface DataPacketMatchMakingParams {
 export interface PeerResult {
     peerId: string;
     score: number | null; // null if peer left without submitting a score
+}
+
+export interface MatchInformation {
+    matchId?: string;
+    peerIds: string[]; // All peers in the match
+    isHost: boolean; // Whether this peer is the host
+    matchDetails?: DataPacketMatchMakingParams; // Optional match configuration
+
 }
 
 // Unified DataPacket interface
@@ -207,7 +198,7 @@ export interface DataPacket {
     },
     peerAcceptedMatch?: {
         proposalId: string,
-        peerId: string,
+        hostPeerId: string,
         acceptedCount: number,
         totalCount: number
     },
@@ -220,12 +211,7 @@ export interface DataPacket {
         reason?: string;
         scores?: Scores; // Optional score when leaving match
     };
-    matchCreated?: {
-        matchId?: string;
-        peerIds: string[]; // All peers in the match
-        isHost: boolean; // Whether this peer is the host
-        matchDetails?: DataPacketMatchMakingParams; // Optional match configuration
-    };
+    matchCreated?: MatchInformation;
     peerListUpdate?: {
         connectedPeers: string[];
     };

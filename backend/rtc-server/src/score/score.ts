@@ -1,5 +1,5 @@
-import { Match, MessageType, DataPacketWrapper, Scores } from  "../../../shared/datapacket";
-import { ClientProfile } from '../types';
+import {  MessageType, DataPacketWrapper, Scores } from  "../../../shared/datapacket";
+import {ClientProfile, Match} from '../types';
 
 // Submit a score for a peer in a match
 export function submitScore(

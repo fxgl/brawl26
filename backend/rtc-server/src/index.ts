@@ -1,7 +1,7 @@
 // Import modules
 import { IClient, IMessage } from 'peer';
-import { ConnectionStatusEnum, DataPacket, DataPacketWrapper, Match, MatchProposal, MessageType, Scores } from "../../shared/datapacket";
-import { ClientProfile } from './types';
+import { ConnectionStatusEnum, DataPacket, DataPacketWrapper, MessageType, Scores } from "../../shared/datapacket";
+import {ClientProfile, Match, MatchProposal} from './types';
 import { peerServer, server, startServer } from './server/server';
 import { MAX_PEERS_PER_MATCH } from './server/config';
 import { broadcastPeerUpdate, changeAndNotifyStatusChange, generateProposalId, notifyError } from './utils/helpers';

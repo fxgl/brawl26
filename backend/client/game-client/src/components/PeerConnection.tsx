@@ -11,9 +11,6 @@ import {Loader, Modal, Stack, Text} from "@mantine/core";
 
 
 export function PeerConnection() {
-    //const [remotePeerId, setRemotePeerId] = useState('');
-    const remotePeerIds = useAppStore(state => state.remotePeerIds);
-    const setRemotePeerIds = useAppStore.getState().setRemotePeerIds;
 
     const profile = useUserProfileStore(state => state.profile);
 
@@ -70,10 +67,40 @@ export function PeerConnection() {
                 message: `Connecting `,
                 color: 'blue',
             });
+
+           // connect(data.matchProposed?.targetPeerIds).catch(console.error);
+        }
+
+       else if (data.type === MessageType.MATCH_OPPORTUNITY && data.matchOpportunity) {
+            notifications.show({
+                title: 'MATCH_OPPORTUNITY',
+                message: `Connecting `,
+                color: 'blue',
+            });
             //setRemotePeerIds(data.matchProposed?.targetPeerIds);
 
+            useAppStore.getState().acceptMatch(data.matchOpportunity.proposalId);
             //connect(data.matchProposed?.targetPeerId).catch(console.error);
-        } else if (data.type === MessageType.CANCEL_MATCH_SEARCH && data.cancelMatchSearch) {
+        }
+        //
+        // Received message from server: {"type":"matchCreated","matchCreated":{"matchId":"match_1741548741851_89e66a5e-445b-4d88-9939-f896e7b3d70d_f8edb500-7339-4579-a600-94da8ff6053a","peerIds":["89e66a5e-445b-4d88-9939-f896e7b3d70d","f8edb500-7339-4579-a600-94da8ff6053a"],"isHost":false}}
+        //
+        else if (data.type === MessageType.MATCH_CREATED && data.matchCreated) {
+            useAppStore.getState().setCurrentMatch(data?.matchCreated);
+        }
+        //PEER_ACCEPTED_MATCH Unhandled
+        // { "type": "PEER_ACCEPTED_MATCH", "peerAcceptedMatch": { "proposalId": "proposal_1741550010345_89e66a5e-445b-4d88-9939-f896e7b3d70d_f8edb500-7339-4579-a600-94da8ff6053a", "peerId": "f8edb500-7339-4579-a600-94da8ff6053a", "acceptedCount": 2, "totalCount": 2 } }
+        else if (data.type === MessageType.PEER_ACCEPTED_MATCH && data.peerAcceptedMatch) {
+
+            notifications.show({
+                title: 'PEER_ACCEPTED_MATCH',
+                message: data.peerAcceptedMatch?.hostPeerId,
+                color: 'blue',
+            });
+            connect(data.peerAcceptedMatch?.hostPeerId).catch(console.error);
+        }
+
+        else if (data.type === MessageType.CANCEL_MATCH_SEARCH && data.cancelMatchSearch) {
             notifications.show({
                 title: 'Match Search Cancelled',
                 message: 'Your match search has been cancelled',
@@ -133,7 +160,7 @@ export function PeerConnection() {
 
     useEffect(() => {
         if (profile && connectionStatus === ConnectionStatusEnum.idle) {
-            console.log("Initializing peer with profile id:", profile.id);
+            console.error("Initializing peer with profile id:", profile.id);
             setError('');
 
             initialize(profile.id).catch((error) => {
@@ -172,13 +199,14 @@ export function PeerConnection() {
                 color: 'red',
                 autoClose: 5000,
             });
-            useAppStore.getState().matchAccepted(connectedPeers);
-            setRemotePeerIds(connectedPeers);
+            console.log("Connected to remote peers:", connectedPeers);
+         //  useAppStore.getState().matchAccepted(connectedPeers);
+          //  setRemotePeerIds(connectedPeers);
         }
     }, [connectedPeers]);
-    useEffect(() => {
-        void connect(remotePeerIds[0]);
-    }, [connect, remotePeerIds]);
+    // useEffect(() => {
+    //     void connect(remotePeerIds[0]);
+    // }, [connect, remotePeerIds]);
 
 
     return (

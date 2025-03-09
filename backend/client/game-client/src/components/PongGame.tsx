@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Box, Button, Group, Text, Stack } from '@mantine/core';
-import { useUserProfileStore } from "../store/userProfileStore";
 import { DataPacket, GameState, MessageType } from "../../../../shared/datapacket.ts";
 import {useAppStore} from "../store/appStore.ts";
 import {peerService} from "../utils/peerService.ts";
@@ -23,10 +22,10 @@ interface PongInputData {
 }
 
 export function PongGame() {
-  const remotePeerId = useAppStore(state => state.remotePeerId);
+  const remotePeerIds = useAppStore(state => state.remotePeerIds);
+  const currentMatch = useAppStore(state => state.currentMatch);
+  const isHost = currentMatch?.isHost===true;
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const profile = useUserProfileStore(state => state.profile);
-  const [isHost,setIsHost] = useState(false);
   const [gameState, setGameState] = useState<GameState>({
     leftPaddleY: GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2,
     rightPaddleY: GAME_HEIGHT / 2 - PADDLE_HEIGHT / 2,
@@ -85,25 +84,19 @@ export function PongGame() {
       peerService.removeDataHandler();
     };
   }, [onData]);
-  const send = useCallback((peer:string,packet:DataPacket)=>
-  {
-    peerService.send(peer, packet);
-  },[])
+  const send = useCallback((peers: string[], packet: DataPacket) => {
+    peers.forEach(peerId => {
+      peerService.send(peerId, packet);
+    });
+  }, []);
 
 
 
-  // Determine if this client is the host (left paddle)
-  useEffect(() => {
-    if (profile && remotePeerId) {
-      // Simple way to determine host: lexicographically compare peer IDs
-      setIsHost( profile.id < remotePeerId);
 
-    }
-  }, [profile, remotePeerId]);
 
   // Send paddle position to peer
   const sendPaddlePosition = useCallback((paddleY: number) => {
-    if (!remotePeerId) return;
+    if (!remotePeerIds) return;
     
     const inputData: PongInputData = {
       paddleY,
@@ -118,12 +111,12 @@ export function PongGame() {
     };
     //console.log(`Sending ${JSON.stringify( packet)}`)
     
-    send(remotePeerId, packet);
-  }, [remotePeerId, send]);
+    send(remotePeerIds, packet);
+  }, [remotePeerIds, send]);
 
   // Start the game
   const startGame = useCallback(() => {
-    if (!isHost || !remotePeerId) return;
+    if (!isHost || !remotePeerIds) return;
     
     // Reset game state
     setGameState(prev => ({
@@ -146,7 +139,7 @@ export function PongGame() {
       }
     };
     
-    send(remotePeerId, packet);
+    send(remotePeerIds, packet);
     
     // Set initial ball direction for host
     setGameState(prev => ({
@@ -154,7 +147,7 @@ export function PongGame() {
       ballSpeedX: initialDirection === 'left' ? -INITIAL_BALL_SPEED : INITIAL_BALL_SPEED,
       ballSpeedY: (Math.random() * 2 - 1) * INITIAL_BALL_SPEED
     }));
-  }, [isHost, remotePeerId, send]);
+  }, [isHost, remotePeerIds, send]);
 
   // Game loop
   useEffect(() => {
@@ -281,7 +274,7 @@ export function PongGame() {
                 }
               }
             };
-            send(remotePeerId, statePacket);
+            send(remotePeerIds, statePacket);
           }
 
           return {
@@ -316,7 +309,7 @@ export function PongGame() {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [gameState.gameStarted, gameState.gameOver, keysPressed, remotePeerId, send, sendPaddlePosition]);
+  }, [gameState.gameStarted, gameState.gameOver, keysPressed, remotePeerIds, send, sendPaddlePosition]);
 
 
   // Draw game on canvas
@@ -387,7 +380,7 @@ export function PongGame() {
   }, []);
 
   function quitTheMatch() {
-    useAppStore.getState().quitMatch(remotePeerId,'player abort');
+    useAppStore.getState().quitMatch('player abort',{result:{}});
   }
 
   return (
