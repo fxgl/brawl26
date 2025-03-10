@@ -107,6 +107,7 @@ class PeerService {
    * @param remotePeerId The ID of the peer to connect to
    */
   connect(remotePeerId: string): Promise<DataConnection> {
+    console.error('connecting to peer:', remotePeerId);
     return new Promise((resolve, reject) => {
       if (!this.peer) {
         reject(new Error('Peer not initialized'));

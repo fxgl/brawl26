@@ -101,6 +101,7 @@ export function usePeer(options: UsePeerOptions) {
 
     // Clean up on unmount
     useEffect(() => {
+        console.error('peerService.create')
         // Set up event handlers
         peerService.setEvents({
             onConnection: (conn: DataConnection) => {

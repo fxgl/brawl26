@@ -85,6 +85,7 @@ export function PongGame() {
     };
   }, [onData]);
   const send = useCallback((peers: string[], packet: DataPacket) => {
+   // console.log(`Sending ${JSON.stringify(packet)} to ${peers.join(', ')}`)
     peers.forEach(peerId => {
       peerService.send(peerId, packet);
     });

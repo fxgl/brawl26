@@ -6,7 +6,7 @@ import {ConnectionStatusEnum, DataPacket, DataPacketChatMessage, MessageType} fr
 import {notifications} from '@mantine/notifications';
 import {DataConnection} from "peerjs";
 import {Loader, Modal, Stack, Text} from "@mantine/core";
-
+import {peerService} from "../utils/peerService.ts";
 // Define a type for received messages
 
 
@@ -38,10 +38,11 @@ export function PeerConnection() {
 
     const connectionStatus = useAppStore(state => state.connectionStatus);
     const setConnectionStatus = useAppStore.getState().setConnectionStatus;
+    const setRemotePeerIds = useAppStore.getState().setRemotePeerIds;
     const setPeerList = useAppStore.getState().setPeerList;
 
 
-    console.log("Rendering PeerConnection");
+    console.log(`Rendering PeerConnection ${connectionStatus}`);
     const onConnection = useCallback(async (conn: DataConnection) => {
         notifications.show({
             title: `Connected to peed`,
@@ -49,7 +50,9 @@ export function PeerConnection() {
             color: 'green',
             autoClose: 5000,
         });
-    }, []);
+        setRemotePeerIds(peerService.getConnectedPeers());
+    }, [setRemotePeerIds]);
+
     const onDisconnection = useCallback(async (peerId: string) => {
         notifications.show({
             title: `Disconnected from peed`,
@@ -97,7 +100,11 @@ export function PeerConnection() {
                 message: data.peerAcceptedMatch?.hostPeerId,
                 color: 'blue',
             });
-            connect(data.peerAcceptedMatch?.hostPeerId).catch(console.error);
+            if(data.peerAcceptedMatch?.hostPeerId !== profile?.id)
+            {
+                connect(data.peerAcceptedMatch?.hostPeerId).catch(console.error);
+            }
+
         }
 
         else if (data.type === MessageType.CANCEL_MATCH_SEARCH && data.cancelMatchSearch) {
